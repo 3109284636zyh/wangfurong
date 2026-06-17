@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI小福 - 管理后台</title>
+  <!-- Vue3 + Element Plus CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'PingFang SC','Microsoft YaHei',sans-serif; }
+    #app { min-height: 100vh; background: #f0f2f5; }
+
+    /* 登录 */
+    .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .login-card { width: 380px; padding: 48px 36px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+    .login-card .logo { font-size: 56px; margin-bottom: 12px; }
+    .login-card h2 { font-size: 22px; margin-bottom: 4px; color: #303133; }
+    .login-card .subtitle { color: #909399; font-size: 13px; margin-bottom: 28px; }
+
+    /* 布局 */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; background: #304156; color: #bfcbd9; position: fixed; top: 0; left: 0; bottom: 0; z-index: 10; overflow-y: auto; }
+    .sidebar-header { padding: 20px 16px; font-size: 17px; font-weight: 700; color: #fff; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sidebar .el-menu { border-right: none; background: #304156; }
+    .main-area { margin-left: 220px; flex: 1; padding: 24px; min-height: 100vh; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ========== 登录页 ========== -->
+  <div v-if="!loggedIn" class="login-wrapper">
+    <div class="login-card">
+      <div class="logo">🤖</div>
+      <h2>AI小福 管理后台</h2>
+      <p class="subtitle">建站接单客服助手 · 管理员入口</p>
+      <el-form @submit.prevent="doLogin">
+        <el-form-item>
+          <el-input v-model="loginPassword" type="password" placeholder="请输入管理密码" size="large" show-password></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="large" @click="doLogin" :loading="loginLoading" style="width:100%">
+            登 录
+          </el-button>
+        </el-form-item>
+      </el-form>
+      <p style="color:#F56C6C;font-size:13px;min-height:20px;">{{ loginError }}</p>
+    </div>
+  </div>
+
+  <!-- ========== 主界面 ========== -->
+  <div v-else class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">🤖 AI小福后台</div>
+      <el-menu :default-active="activeMenu" @select="switchMenu" background-color="#304156" text-color="#bfcbd9" active-text-color="#409EFF">
+        <el-menu-item index="dashboard"><el-icon><DataAnalysis /></el-icon> 仪表盘</el-menu-item>
+        <el-menu-item index="ai-settings"><el-icon><Setting /></el-icon> AI个性设置</el-menu-item>
+        <el-menu-item index="products"><el-icon><Goods /></el-icon> 产品库管理</el-menu-item>
+        <el-menu-item index="apis"><el-icon><Connection /></el-icon> API管理</el-menu-item>
+        <el-menu-item index="logs"><el-icon><Document /></el-icon> 对话日志</el-menu-item>
+        <el-menu-item index="banned"><el-icon><WarningFilled /></el-icon> 风控违禁词库</el-menu-item>
+      </el-menu>
+      <div style="position:absolute;bottom:16px;left:16px;right:16px;">
+        <el-button @click="logout" style="width:100%;" size="small">🚪 退出登录</el-button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+
+      <!-- 仪表盘 -->
+      <div v-show="activeMenu==='dashboard'">
+        <h2 style="margin-bottom:20px;">📊 仪表盘</h2>
+        <el-row :gutter="20">
+          <el-col :span="6" v-for="s in stats" :key="s.label">
+            <el-card shadow="hover" style="text-align:center;margin-bottom:16px;">
+              <div style="font-size:32px;font-weight:700;color:#409EFF;">{{ s.value }}</div>
+              <div style="color:#909399;font-size:13px;">{{ s.label }}</div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- AI个性设置 -->
+      <div v-show="activeMenu==='ai-settings'">
+        <h2 style="margin-bottom:8px;">🎭 AI小福个性设置</h2>
+        <p style="color:#909399;margin-bottom:20px;">自定义AI性格、对话习惯、记忆等，保存后小程序端实时生效。</p>
+        <el-card>
+          <el-form :model="aiForm" label-width="130px">
+            <el-form-item label="性格描述">
+              <el-input v-model="aiForm.personality" type="textarea" :rows="3" placeholder="例如：你是一个专业耐心的建站客服，精通网站建设、小程序开发..."></el-input>
+            </el-form-item>
+            <el-row :gutter="16">
+              <el-col :span="8">
+                <el-form-item label="回复字数限制">
+                  <el-input-number v-model="aiForm.reply_max_length" :min="50" :max="2000" :step="50"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="回复语气">
+                  <el-select v-model="aiForm.reply_tone">
+                    <el-option label="专业温和" value="专业温和"/>
+                    <el-option label="直白干练" value="直白干练"/>
+                    <el-option label="热情亲切" value="热情亲切"/>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="记忆保存天数">
+                  <el-input-number v-model="aiForm.memory_retention_days" :min="1" :max="365"/>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-form-item label="对话习惯">
+              <el-checkbox v-model="aiForm.reply_in_paragraphs" :true-value="1" :false-value="0">分段回复</el-checkbox>
+              <el-checkbox v-model="aiForm.proactive_follow_up" :true-value="1" :false-value="0">主动追问客户</el-checkbox>
+              <el-checkbox v-model="aiForm.ban_internet_slang" :true-value="1" :false-value="0">禁止网络流行语</el-checkbox>
+              <el-checkbox v-model="aiForm.ban_marketing_words" :true-value="1" :false-value="0">禁止营销违禁词</el-checkbox>
+              <el-checkbox v-model="aiForm.memory_enabled" :true-value="1" :false-value="0">开启上下文记忆</el-checkbox>
+            </el-form-item>
+            <el-form-item label="默认开场白">
+              <el-input v-model="aiForm.default_opening" type="textarea" :rows="2" placeholder="客户初次对话时的默认开场白"></el-input>
+            </el-form-item>
+            <el-form-item label="兜底回复">
+              <el-input v-model="aiForm.fallback_reply" type="textarea" :rows="2" placeholder="输入乱码/违规内容时的兜底回复"></el-input>
+            </el-form-item>
+            <el-form-item label="自定义提示词">
+              <el-input v-model="aiForm.custom_system_prompt" type="textarea" :rows="5" placeholder="完全自定义系统提示词（留空则使用上述设置自动生成）"></el-input>
+              <span style="color:#909399;font-size:12px;">高级设置。填写后将覆盖上述所有个性设置。</span>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="saveAiSettings" :loading="saving">💾 保存设置（实时生效）</el-button>
+              <el-button @click="clearMemories" type="danger" plain>🧹 清空全部记忆</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </div>
+
+      <!-- 产品库管理 -->
+      <div v-show="activeMenu==='products'">
+        <h2 style="margin-bottom:20px;">📦 建站产品价格库</h2>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+          <el-button type="primary" @click="showProductDialog()">➕ 添加产品</el-button>
+          <el-button @click="exportProducts">📥 导出Excel</el-button>
+          <el-upload :action="apiBase+'/api/products/import'" :headers="uploadHeaders" accept=".xlsx,.xls" :on-success="onImportSuccess" :show-file-list="false">
+            <el-button>📤 批量导入Excel</el-button>
+          </el-upload>
+          <el-input v-model="productSearch" placeholder="搜索产品..." style="width:240px;margin-left:auto;" clearable @input="loadProducts"/>
+          <el-select v-model="productCategoryFilter" placeholder="分类筛选" style="width:160px;" clearable @change="loadProducts">
+            <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id"/>
+          </el-select>
+        </div>
+        <el-card>
+          <el-table :data="productList" stripe>
+            <el-table-column prop="name" label="产品名称" width="160"/>
+            <el-table-column prop="category_name" label="分类" width="110"/>
+            <el-table-column prop="standard_price" label="标准价" width="90">
+              <template #default="scope">¥{{ scope.row.standard_price }}</template>
+            </el-table-column>
+            <el-table-column prop="discount_price" label="优惠价" width="90">
+              <template #default="scope">¥{{ scope.row.discount_price }}</template>
+            </el-table-column>
+            <el-table-column prop="delivery_days" label="交付周期" width="100"/>
+            <el-table-column label="状态" width="80">
+              <template #default="scope">
+                <el-tag :type="scope.row.is_active?'success':'info'">{{ scope.row.is_active?'上架':'下架' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="description" label="服务介绍" min-width="200" show-overflow-tooltip/>
+            <el-table-column label="操作" width="240" fixed="right">
+              <template #default="scope">
+                <el-button size="small" @click="showProductDialog(scope.row)">编辑</el-button>
+                <el-button size="small" :type="scope.row.is_active?'warning':'success'" @click="toggleProduct(scope.row)">
+                  {{ scope.row.is_active?'下架':'上架' }}
+                </el-button>
+                <el-button size="small" type="danger" @click="deleteProduct(scope.row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div style="margin-top:16px;text-align:center;">
+            <el-pagination background layout="prev,pager,next" :total="productTotal" :page-size="20" @current-change="p=>loadProducts(p)"/>
+          </div>
+        </el-card>
+      </div>
+
+      <!-- API管理 -->
+      <div v-show="activeMenu==='apis'">
+        <h2 style="margin-bottom:8px;">🔌 大模型API管理</h2>
+        <p style="color:#909399;margin-bottom:20px;">主接口为DeepSeek，支持添加备用API，主接口故障时自动切换。</p>
+        <el-button type="primary" @click="showApiDialog()" style="margin-bottom:16px;">➕ 添加API</el-button>
+        <el-card>
+          <el-table :data="apiList" stripe>
+            <el-table-column prop="name" label="名称" width="140"/>
+            <el-table-column prop="api_type" label="类型" width="100">
+              <template #default="scope"><el-tag size="small">{{ scope.row.api_type }}</el-tag></template>
+            </el-table-column>
+            <el-table-column prop="model" label="模型" width="160"/>
+            <el-table-column prop="api_key" label="API Key" width="180"/>
+            <el-table-column prop="temperature" label="温度" width="70"/>
+            <el-table-column label="主接口" width="90">
+              <template #default="scope">
+                <el-tag v-if="scope.row.is_primary" type="danger" size="small">主API</el-tag>
+                <span v-else style="color:#909399;">备用</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="280">
+              <template #default="scope">
+                <el-button size="small" @click="testApi(scope.row)">🔍 测试</el-button>
+                <el-button size="small" @click="showApiDialog(scope.row)">编辑</el-button>
+                <el-button v-if="!scope.row.is_primary" size="small" type="warning" @click="setPrimaryApi(scope.row.id)">设为主</el-button>
+                <el-button size="small" type="danger" @click="deleteApi(scope.row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </div>
+
+      <!-- 对话日志 -->
+      <div v-show="activeMenu==='logs'">
+        <h2 style="margin-bottom:20px;">📋 对话日志</h2>
+        <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+          <el-input v-model="logSearch" placeholder="搜索提问/回复内容..." style="width:260px;" clearable @input="loadLogs"/>
+          <el-date-picker v-model="logDateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" @change="loadLogs"/>
+          <el-button @click="loadLogs">查询</el-button>
+          <el-button @click="exportLogs" style="margin-left:auto;">📥 导出日志</el-button>
+        </div>
+        <el-card>
+          <el-table :data="logList" stripe>
+            <el-table-column prop="user_question" label="客户提问" min-width="200" show-overflow-tooltip/>
+            <el-table-column prop="ai_reply" label="AI回复" min-width="250" show-overflow-tooltip/>
+            <el-table-column prop="api_name" label="API渠道" width="140"/>
+            <el-table-column prop="response_time_ms" label="耗时(ms)" width="90"/>
+            <el-table-column label="风控" width="70">
+              <template #default="scope">
+                <el-tag v-if="scope.row.is_violation" type="danger" size="small">触发</el-tag>
+                <span v-else style="color:#67C23A;">✓</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="created_at" label="时间" width="170"/>
+            <el-table-column label="操作" width="60">
+              <template #default="scope">
+                <el-button size="small" type="danger" @click="deleteLog(scope.row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div style="margin-top:16px;text-align:center;">
+            <el-pagination background layout="prev,pager,next" :total="logTotal" :page-size="50" @current-change="p=>loadLogs(p)"/>
+          </div>
+        </el-card>
+      </div>
+
+      <!-- 违禁词库 -->
+      <div v-show="activeMenu==='banned'">
+        <h2 style="margin-bottom:8px;">🛡️ 风控违禁词库</h2>
+        <p style="color:#909399;margin-bottom:20px;">AI生成回复后，会自动检测并过滤以下违禁词，确保百分百合规。</p>
+        <div style="display:flex;gap:12px;margin-bottom:16px;">
+          <el-button type="primary" @click="showBannedDialog()">➕ 添加违禁词</el-button>
+          <el-input v-model="bannedCheckText" placeholder="输入内容检测是否违规..." style="width:360px;" clearable/>
+          <el-button @click="checkBannedText">检测</el-button>
+        </div>
+        <el-card>
+          <el-table :data="bannedList" stripe>
+            <el-table-column prop="word" label="违禁词" width="200"/>
+            <el-table-column prop="category" label="分类" width="120">
+              <template #default="scope"><el-tag size="small">{{ scope.row.category }}</el-tag></template>
+            </el-table-column>
+            <el-table-column label="正则" width="70">
+              <template #default="scope">{{ scope.row.is_regex?'是':'否' }}</template>
+            </el-table-column>
+            <el-table-column label="状态" width="70">
+              <template #default="scope">
+                <el-tag :type="scope.row.is_active?'success':'info'" size="small">{{ scope.row.is_active?'启用':'禁用' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="140">
+              <template #default="scope">
+                <el-button size="small" @click="showBannedDialog(scope.row)">编辑</el-button>
+                <el-button size="small" type="danger" @click="deleteBanned(scope.row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ========== 弹窗：产品编辑 ========== -->
+  <el-dialog v-model="productDialogVisible" :title="editingProduct.id?'编辑产品':'添加产品'" width="680px" @closed="resetProductForm">
+    <el-form :model="productForm" label-width="110px">
+      <el-row :gutter="16">
+        <el-col :span="12">
+          <el-form-item label="产品名称"><el-input v-model="productForm.name"/></el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="产品分类">
+            <el-select v-model="productForm.category_id" clearable>
+              <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-form-item label="服务介绍"><el-input v-model="productForm.description" type="textarea" :rows="2"/></el-form-item>
+      <el-row :gutter="16">
+        <el-col :span="8"><el-form-item label="标准售价"><el-input v-model="productForm.standard_price" type="number"/></el-form-item></el-col>
+        <el-col :span="8"><el-form-item label="优惠价"><el-input v-model="productForm.discount_price" type="number"/></el-form-item></el-col>
+        <el-col :span="8"><el-form-item label="交付周期"><el-input v-model="productForm.delivery_days"/></el-form-item></el-col>
+      </el-row>
+      <el-form-item label="包含服务"><el-input v-model="productForm.included_services" type="textarea" :rows="2"/></el-form-item>
+      <el-form-item label="不包含服务"><el-input v-model="productForm.excluded_services" type="textarea" :rows="2"/></el-form-item>
+      <el-form-item label="售后保障"><el-input v-model="productForm.after_sales"/></el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="productDialogVisible=false">取消</el-button>
+      <el-button type="primary" @click="saveProduct" :loading="saving">保存</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- ========== 弹窗：API编辑 ========== -->
+  <el-dialog v-model="apiDialogVisible" :title="editingApi.id?'编辑API':'添加API'" width="540px">
+    <el-form :model="apiForm" label-width="110px">
+      <el-form-item label="名称"><el-input v-model="apiForm.name" placeholder="例如：DeepSeek主账号"/></el-form-item>
+      <el-form-item label="类型">
+        <el-select v-model="apiForm.api_type">
+          <el-option label="DeepSeek" value="deepseek"/>
+          <el-option label="OpenAI" value="openai"/>
+          <el-option label="自定义" value="custom"/>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="API地址"><el-input v-model="apiForm.api_url" placeholder="https://api.deepseek.com/v1/chat/completions"/></el-form-item>
+      <el-form-item label="API Key"><el-input v-model="apiForm.api_key" type="password" show-password placeholder="sk-..." /></el-form-item>
+      <el-form-item label="模型"><el-input v-model="apiForm.model" placeholder="deepseek-chat"/></el-form-item>
+      <el-row :gutter="16">
+        <el-col :span="8"><el-form-item label="温度"><el-input-number v-model="apiForm.temperature" :min="0" :max="2" :step="0.1"/></el-form-item></el-col>
+        <el-col :span="8"><el-form-item label="最大Token"><el-input-number v-model="apiForm.max_tokens" :min="100" :max="32000"/></el-form-item></el-col>
+        <el-col :span="8"><el-form-item label="超时(秒)"><el-input-number v-model="apiForm.timeout_seconds" :min="5" :max="120"/></el-form-item></el-col>
+      </el-row>
+    </el-form>
+    <template #footer>
+      <el-button @click="apiDialogVisible=false">取消</el-button>
+      <el-button type="primary" @click="saveApi" :loading="saving">保存</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- ========== 弹窗：违禁词编辑 ========== -->
+  <el-dialog v-model="bannedDialogVisible" :title="editingBanned.id?'编辑违禁词':'添加违禁词'" width="460px">
+    <el-form :model="bannedForm" label-width="100px">
+      <el-form-item label="违禁词"><el-input v-model="bannedForm.word"/></el-form-item>
+      <el-form-item label="分类"><el-input v-model="bannedForm.category" placeholder="站外引流/联系方式/私下交易/营销违禁"/></el-form-item>
+      <el-form-item label="正则表达式"><el-switch v-model="bannedForm.is_regex" :true-value="1" :false-value="0"/></el-form-item>
+      <el-form-item label="启用"><el-switch v-model="bannedForm.is_active" :true-value="1" :false-value="0"/></el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="bannedDialogVisible=false">取消</el-button>
+      <el-button type="primary" @click="saveBanned">保存</el-button>
+    </template>
+  </el-dialog>
+
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

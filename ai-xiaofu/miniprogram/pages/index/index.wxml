@@ -1,0 +1,126 @@
+<!-- AI小福 -->
+<view class="container">
+
+  <!-- 顶部标题栏 -->
+  <view class="header">
+    <view class="header-icon">🤖</view>
+    <view class="header-title">AI小福</view>
+    <view class="header-subtitle">{{chatMode === 'work' ? '建站接单客服助手 · 一键生成合规回复' : '你的AI生活伴侣 · 随时陪你聊天'}}</view>
+  </view>
+
+  <!-- 模式切换 -->
+  <view class="mode-switch-bar">
+    <view class="mode-switch {{chatMode === 'work' ? 'active' : ''}}" bindtap="switchMode" data-mode="work">
+      <text class="mode-icon">💼</text>
+      <text class="mode-label">普通聊天模式</text>
+    </view>
+    <view class="mode-switch {{chatMode === 'chat' ? 'active' : ''}}" bindtap="switchMode" data-mode="chat">
+      <text class="mode-icon">💕</text>
+      <text class="mode-label">进入AI小福</text>
+    </view>
+  </view>
+
+  <!-- 输入区域 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">{{chatMode === 'work' ? '📋 客户咨询内容' : '💬 和AI小福聊天'}}</text>
+      <text class="section-desc">{{chatMode === 'work' ? '粘贴客户在闲鱼/淘宝/拼多多发来的消息' : '直接输入你想说的话，小福会回复你哦'}}</text>
+    </view>
+    <textarea
+      class="input-area"
+      value="{{inputText}}"
+      placeholder="{{chatMode === 'work' ? '在此粘贴客户咨询内容...\n\n例如：建一个企业官网多少钱？包含哪些服务？' : '和小福说点什么吧...\n\n例如：小福，我今天心情不好'}}"
+      bindinput="onInputChange"
+      auto-height
+      maxlength="5000"
+    />
+    <view class="input-footer">
+      <text class="char-count">{{inputText.length}}/5000</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <button class="btn btn-primary" bindtap="generateReply" loading="{{generating}}" disabled="{{!inputText.trim()}}">
+      {{chatMode === 'work' ? '⚡ 一键生成回复' : '💕 发送给小福'}}
+    </button>
+    <view class="action-row">
+      <button class="btn btn-outline btn-half" bindtap="clearAll" disabled="{{!inputText && !outputText}}">
+        🗑️ 一键清空
+      </button>
+      <button class="btn btn-outline btn-half" bindtap="copyResult" disabled="{{!outputText}}">
+        📋 复制结果
+      </button>
+    </view>
+  </view>
+
+  <!-- AI小福聊天模式 - 对话历史 -->
+  <view wx:if="{{chatMode === 'chat' && chatHistory.length > 0 && !generating && !outputText}}" class="section">
+    <view class="section-header">
+      <text class="section-title">💕 最近对话</text>
+    </view>
+    <view class="chat-history-list">
+      <view wx:for="{{chatHistory}}" wx:key="index" class="chat-msg {{item.role === 'user' ? 'msg-user' : 'msg-fu'}}">
+        <view class="msg-bubble">
+          <text class="msg-text">{{item.content}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 输出区域 -->
+  <view class="section" wx:if="{{outputText || generating}}">
+    <view class="section-header">
+      <text class="section-title">{{chatMode === 'work' ? '✨ AI生成回复' : '💕 小福说'}}</text>
+      <text class="section-desc" wx:if="{{responseInfo}}">{{responseInfo}}</text>
+    </view>
+    <view class="output-area">
+      <!-- 加载动画 -->
+      <view wx:if="{{generating}}" class="loading-box">
+        <view class="loading-dots">
+          <view class="dot dot-1"></view>
+          <view class="dot dot-2"></view>
+          <view class="dot dot-3"></view>
+        </view>
+        <text class="loading-text">{{chatMode === 'work' ? 'AI正在生成合规回复...' : '小福正在思考...'}}</text>
+      </view>
+      <!-- 回复内容 -->
+      <view wx:else class="output-content">
+        <text class="output-text">{{outputText}}</text>
+      </view>
+    </view>
+    <!-- 风控提醒（仅工作模式） -->
+    <view wx:if="{{isViolation && chatMode === 'work'}}" class="violation-tip">
+      ⚠️ 回复已通过风控检测，违禁词已自动处理
+    </view>
+  </view>
+
+  <!-- 网络/API错误提示 -->
+  <view wx:if="{{errorMsg}}" class="error-box">
+    <text>❌ {{errorMsg}}</text>
+  </view>
+
+  <!-- 使用说明 -->
+  <view class="help-section">
+    <view class="help-title">💡 {{chatMode === 'work' ? '使用说明' : '和小福聊天小贴士'}}</view>
+    <view wx:if="{{chatMode === 'work'}}" class="help-steps">
+      <view class="step">1️⃣ 在闲鱼/淘宝/拼多多复制客户咨询消息</view>
+      <view class="step">2️⃣ 粘贴到上方输入框</view>
+      <view class="step">3️⃣ 点击【一键生成回复】按钮</view>
+      <view class="step">4️⃣ 复制生成的回复，粘贴发送给客户</view>
+    </view>
+    <view wx:else class="help-steps">
+      <view class="step">💕 小福是你专属的AI伴侣，温柔体贴、善解人意</view>
+      <view class="step">💬 你可以和小福聊任何话题，她会记住关于你的事</view>
+      <view class="step">🧠 告诉小福你的名字、喜好，她会一直记得</view>
+      <view class="step">🔄 随时点击上方切换按钮回到工作模式</view>
+    </view>
+  </view>
+
+  <!-- 底部提示 -->
+  <view class="footer-note">
+    <text wx:if="{{chatMode === 'work'}}">AI回复已过风控检测 · 100%合规 · 自动结合产品报价</text>
+    <text wx:else>小福的回复由AI生成 · 你的隐私很安全 · 后台可自定义小福的一切</text>
+  </view>
+
+</view>
