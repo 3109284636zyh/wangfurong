@@ -57,21 +57,37 @@
 
   <!-- ========== 登录页 ========== -->
   <div v-if="!loggedIn" class="login-wrapper">
-    <div class="login-card">
-      <div class="logo">🤖</div>
-      <h2>AI小福 管理后台</h2>
-      <p class="subtitle">建站接单客服助手 · 管理员入口</p>
-      <el-form @submit.prevent="doLogin">
-        <el-form-item>
-          <el-input v-model="loginPassword" type="password" placeholder="请输入管理密码" size="large" show-password></el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" size="large" @click="doLogin" :loading="loginLoading" style="width:100%">
-            登 录
-          </el-button>
-        </el-form-item>
-      </el-form>
-      <p style="color:#F56C6C;font-size:13px;min-height:20px;">{{ loginError }}</p>
+    <div class="login-shell">
+      <section class="login-hero">
+        <div class="login-badge">AI小福 Admin Console</div>
+        <h1 class="login-title">建站接单客服助手后台</h1>
+        <p class="login-description">统一管理 AI 个性、产品价格库、大模型 API、对话日志与风控词库，让小程序客服更稳、更快、更好用。</p>
+        <div class="login-feature-list">
+          <div class="login-feature-item">AI 个性配置实时生效</div>
+          <div class="login-feature-item">产品报价与接口统一管理</div>
+          <div class="login-feature-item">对话日志与风控策略可追踪</div>
+        </div>
+      </section>
+
+      <section class="login-panel">
+        <div class="login-card">
+          <div class="logo-mark">AI</div>
+          <h2>管理员登录</h2>
+          <p class="subtitle">请输入管理密码进入后台</p>
+          <el-form class="login-form" @submit.prevent="doLogin">
+            <el-form-item>
+              <el-input v-model="loginPassword" type="password" placeholder="请输入管理密码" size="large" show-password autocomplete="current-password"></el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-button class="login-submit" type="primary" size="large" native-type="submit" :loading="loginLoading">
+                登录后台
+              </el-button>
+            </el-form-item>
+          </el-form>
+          <p class="login-error">{{ loginError }}</p>
+          <p class="login-footer">AI小福管理后台 · 安全入口</p>
+        </div>
+      </section>
     </div>
   </div>
 
