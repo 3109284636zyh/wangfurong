@@ -1,0 +1,46 @@
+{
+  "env": {
+    "PROJECT_DOMAIN": "wfr.ccvo.top",
+    "DB_NAME": "ai_xiaofu",
+    "DEFAULT_API_TYPE": "deepseek"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[Claude Code] 文件已修改: $CLAUDE_TOOL_INPUT_FILE_PATH'"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm start)",
+      "Bash(npm install)",
+      "Bash(npm test)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git stash *)",
+      "Bash(mysql *)",
+      "Bash(mkdir *)",
+      "Bash(explorer *)",
+      "Bash(dir *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push *)",
+      "Bash(git reset --hard *)",
+      "Bash(drop *)",
+      "Bash(shutdown *)"
+    ]
+  }
+}
