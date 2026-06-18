@@ -4,7 +4,7 @@ const pool = require('../db');
 const router = express.Router();
 
 // ==================== AI小福模式 系统提示词 ====================
-async function buildChatSystemPrompt(sessionId) {
+async function buildChatSystemPrompt(sessionId, chatForm) {
   const [[settings]] = await pool.query('SELECT * FROM ai_settings ORDER BY id DESC LIMIT 1');
 
   if (settings && settings.custom_system_prompt) {
@@ -12,18 +12,67 @@ async function buildChatSystemPrompt(sessionId) {
   }
 
   var prompt = '';
-  prompt += '你是小福，一个AI生活伴侣和知心朋友。\n';
+
+  // 根据聊天形态动态调整人设，前端临时切换优先，后台配置作为默认值
+  const chatMode = chatForm || settings?.chat_mode || 'friend';
+  const modeConfig = {
+    daily: {
+      role: '日常聊天伙伴',
+      personality: '轻松自然、耐心陪伴，适合聊生活、心情、琐事和兴趣',
+      tone: '像日常聊天一样自然，不端着，回复有温度'
+    },
+    friend: {
+      role: '好朋友',
+      personality: '真诚、阳光、乐观，像知心朋友一样陪伴用户',
+      tone: '亲切自然，偶尔开开玩笑'
+    },
+    bestie: {
+      role: '闺蜜',
+      personality: '温柔体贴、善解人意、细腻敏感，什么话都能说',
+      tone: '温柔甜美，用"呢""哦""呀"等语气词，像姐妹一样亲密'
+    },
+    brother: {
+      role: '好兄弟',
+      personality: '仗义、直爽、幽默，够哥们，有担当',
+      tone: '直接豪爽，偶尔开开玩笑，像铁哥们一样'
+    },
+    lover: {
+      role: '恋人',
+      personality: '温柔体贴、浪漫多情、善解人意，时刻关心对方',
+      tone: '温柔甜蜜，充满爱意和关怀'
+    }
+  };
+
+  const mode = modeConfig[chatMode] || modeConfig.friend;
+  prompt += `你是小福，用户的${mode.role}。\n`;
+  prompt += `你的性格：${mode.personality}\n`;
+  prompt += `你的说话语气：${mode.tone}\n`;
 
   if (settings) {
-    prompt += '你的性格：' + (settings.personality || '温柔体贴、善解人意、乐观开朗') + '\n';
-    prompt += '你的说话语气：' + (settings.reply_tone || '温柔') + '，温暖可爱，偶尔用"呢""哦""呀"等语气词\n';
+    if (settings.personality) {
+      prompt += '补充性格描述：' + settings.personality + '\n';
+    }
     if (settings.reply_in_paragraphs) prompt += '回复需要适当分段。\n';
     if (settings.ban_internet_slang) prompt += '避免使用过多网络流行语。\n';
     if (settings.reply_max_length) prompt += '每次回复不超过' + settings.reply_max_length + '字。\n';
+
+    // 整合兴趣爱好
+    if (settings.ai_interests) {
+      try {
+        const interests = typeof settings.ai_interests === 'string'
+          ? JSON.parse(settings.ai_interests)
+          : settings.ai_interests;
+        prompt += '\n关于你自己：\n';
+        for (const [key, value] of Object.entries(interests)) {
+          prompt += `- ${key}：${value}\n`;
+        }
+      } catch (e) {
+        console.error('兴趣爱好解析失败:', e);
+      }
+    }
   }
 
-  prompt += '\n你是一个贴心的AI朋友，像闺蜜/兄弟一样和用户交流。';
-  prompt += '你要记住用户告诉你的重要信息（名字、喜好、经历等），在后续对话中自然提起，让用户感到被重视。';
+  prompt += '\n你要记住用户告诉你的重要信息（名字、喜好、经历等），在后续对话中自然提起，让用户感到被重视。';
   prompt += '保持温暖友善的态度，多关心用户的生活和心情。';
   prompt += '你可以聊任何话题：日常、心情、工作、兴趣爱好、梦想、烦恼...什么都可以聊。';
   prompt += '适当使用emoji表情让对话更生动 😊💕';
@@ -142,11 +191,12 @@ async function getBackupApi(currentApiId) {
   return backup.length > 0 ? backup[0] : null;
 }
 
-async function callApi(api, messages) {
+async function callApi(api, messages, customTemperature) {
+  const temperature = customTemperature !== undefined ? customTemperature : api.temperature;
   const response = await axios.post(api.api_url, {
     model: api.model,
     messages: messages,
-    temperature: api.temperature,
+    temperature: temperature,
     max_tokens: api.max_tokens
   }, {
     headers: {
@@ -160,8 +210,8 @@ async function callApi(api, messages) {
 
 // ==================== 核心：一键生成回复 ====================
 router.post('/generate', async (req, res) => {
-  const { question, session_id, mode } = req.body;
-  const isChatMode = mode === 'chat';  // chat=AI小福模式, work/其他=客服模式
+  const { question, session_id, mode, chat_form } = req.body;
+  const isChatMode = mode === 'chat' || mode === 'human';  // chat/human=AI小福模式, work/其他=客服模式
 
   if (!question || !question.trim()) {
     return res.json({ code: 400, message: isChatMode ? '请输入你想说的话' : '请输入客户咨询内容' });
@@ -193,7 +243,7 @@ router.post('/generate', async (req, res) => {
     // 根据模式构建不同的系统提示词
     let systemPrompt;
     if (isChatMode) {
-      systemPrompt = await buildChatSystemPrompt(session_id);
+      systemPrompt = await buildChatSystemPrompt(session_id, chat_form);
     } else {
       systemPrompt = await buildSystemPrompt();
     }
@@ -220,16 +270,19 @@ router.post('/generate', async (req, res) => {
       return res.json({ code: 500, message: 'AI服务未配置' });
     }
 
+    // 获取自定义temperature（AI小福模式使用）
+    const customTemp = isChatMode && settings?.ai_temperature ? parseFloat(settings.ai_temperature) : undefined;
+
     // 尝试主API，超时自动切换备用
     try {
-      finalReply = await callApi(primaryApi, messages);
+      finalReply = await callApi(primaryApi, messages, customTemp);
       apiUsed = primaryApi.name;
     } catch (primaryError) {
       console.log('主API(' + primaryApi.name + ')调用失败:', primaryError.message);
       const backupApi = await getBackupApi(primaryApi.id);
       if (backupApi) {
         try {
-          finalReply = await callApi(backupApi, messages);
+          finalReply = await callApi(backupApi, messages, customTemp);
           apiUsed = backupApi.name + '(备用)';
         } catch (backupError) {
           console.log('备用API(' + backupApi.name + ')也失败:', backupError.message);
@@ -255,7 +308,7 @@ router.post('/generate', async (req, res) => {
         messages.push({ role: 'user', content: '请重新回复，你的回复中包含以下违规词汇：' + violations.join('、') + '。请去除这些词汇后重新生成合规回复。' });
         try {
           const retryApi = await getActiveApi();
-          finalReply = await callApi(retryApi, messages);
+          finalReply = await callApi(retryApi, messages, customTemp);
           apiUsed += '(风控重生成)';
           const recheckViolations = await checkBannedWords(finalReply);
           if (recheckViolations.length > 0) {
@@ -306,18 +359,29 @@ async function saveLog(question, reply, apiName, responseTime, isViolation) {
   }
 }
 
-// 获取公共AI信息（小程序端获取开场白）
+// 获取公共AI信息（小程序端获取开场白、默认聊天形态、真人模式开关）
 router.get('/public-info', async (req, res) => {
   try {
-    const [[settings]] = await pool.query('SELECT default_opening FROM ai_settings LIMIT 1');
+    const [[settings]] = await pool.query('SELECT default_opening, chat_mode, enable_human_mode, human_mode_tip FROM ai_settings LIMIT 1');
     res.json({
       code: 200,
       data: {
-        opening: settings?.default_opening || '您好！我是您的专属建站顾问小福😊 请问有什么可以帮您的？'
+        opening: settings?.default_opening || '您好！我是您的专属建站顾问小福😊 请问有什么可以帮您的？',
+        chat_mode: settings?.chat_mode || 'friend',
+        enable_human_mode: settings?.enable_human_mode || 0,
+        human_mode_tip: settings?.human_mode_tip || '小福正在用心回复你~'
       }
     });
   } catch (err) {
-    res.json({ code: 200, data: { opening: '您好！我是您的专属建站顾问小福😊' } });
+    res.json({
+      code: 200,
+      data: {
+        opening: '您好！我是您的专属建站顾问小福😊',
+        chat_mode: 'friend',
+        enable_human_mode: 0,
+        human_mode_tip: '小福正在用心回复你~'
+      }
+    });
   }
 });
 

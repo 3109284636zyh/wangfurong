@@ -21,10 +21,32 @@ router.put('/', adminAuth, async (req, res) => {
     personality, reply_max_length, reply_in_paragraphs,
     proactive_follow_up, ban_internet_slang, ban_marketing_words,
     reply_tone, memory_enabled, memory_retention_days,
-    default_opening, fallback_reply, custom_system_prompt
+    default_opening, fallback_reply, custom_system_prompt,
+    chat_mode, ai_temperature, ai_interests,
+    enable_human_mode, human_mode_tip
   } = req.body;
 
   try {
+    // 解析兴趣爱好格式：将多行文本转为JSON
+    let interestsJson = ai_interests;
+    if (ai_interests && typeof ai_interests === 'string' && !ai_interests.startsWith('{')) {
+      try {
+        const lines = ai_interests.split('\n').filter(line => line.trim());
+        const parsed = {};
+        for (const line of lines) {
+          const colonIndex = line.indexOf('：') !== -1 ? line.indexOf('：') : line.indexOf(':');
+          if (colonIndex > 0) {
+            const key = line.substring(0, colonIndex).trim();
+            const value = line.substring(colonIndex + 1).trim();
+            if (key && value) parsed[key] = value;
+          }
+        }
+        interestsJson = JSON.stringify(parsed);
+      } catch (e) {
+        console.error('兴趣爱好解析失败:', e);
+      }
+    }
+
     const [existing] = await pool.query('SELECT id FROM ai_settings LIMIT 1');
     if (existing.length > 0) {
       await pool.query(`
@@ -32,23 +54,31 @@ router.put('/', adminAuth, async (req, res) => {
           personality=?, reply_max_length=?, reply_in_paragraphs=?,
           proactive_follow_up=?, ban_internet_slang=?, ban_marketing_words=?,
           reply_tone=?, memory_enabled=?, memory_retention_days=?,
-          default_opening=?, fallback_reply=?, custom_system_prompt=?
+          default_opening=?, fallback_reply=?, custom_system_prompt=?,
+          chat_mode=?, ai_temperature=?, ai_interests=?,
+          enable_human_mode=?, human_mode_tip=?
         WHERE id=?
       `, [personality, reply_max_length, reply_in_paragraphs,
           proactive_follow_up, ban_internet_slang, ban_marketing_words,
           reply_tone, memory_enabled, memory_retention_days,
-          default_opening, fallback_reply, custom_system_prompt, existing[0].id]);
+          default_opening, fallback_reply, custom_system_prompt,
+          chat_mode, ai_temperature, interestsJson,
+          enable_human_mode, human_mode_tip, existing[0].id]);
     } else {
       await pool.query(`
         INSERT INTO ai_settings (personality, reply_max_length, reply_in_paragraphs,
           proactive_follow_up, ban_internet_slang, ban_marketing_words,
           reply_tone, memory_enabled, memory_retention_days,
-          default_opening, fallback_reply, custom_system_prompt)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+          default_opening, fallback_reply, custom_system_prompt,
+          chat_mode, ai_temperature, ai_interests,
+          enable_human_mode, human_mode_tip)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
       `, [personality, reply_max_length, reply_in_paragraphs,
           proactive_follow_up, ban_internet_slang, ban_marketing_words,
           reply_tone, memory_enabled, memory_retention_days,
-          default_opening, fallback_reply, custom_system_prompt]);
+          default_opening, fallback_reply, custom_system_prompt,
+          chat_mode, ai_temperature, interestsJson,
+          enable_human_mode, human_mode_tip]);
     }
 
     // 清理过期记忆

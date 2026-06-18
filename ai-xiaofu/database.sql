@@ -31,6 +31,11 @@ CREATE TABLE IF NOT EXISTS ai_settings (
   default_opening TEXT COMMENT '默认开场白',
   fallback_reply TEXT COMMENT '兜底回复',
   custom_system_prompt TEXT COMMENT '自定义系统提示词',
+  chat_mode VARCHAR(50) DEFAULT 'friend' COMMENT '聊天形态：friend(朋友)/bestie(闺蜜)/brother(兄弟)/lover(恋人)',
+  ai_temperature DECIMAL(3,2) DEFAULT 0.7 COMMENT 'AI回复随机性(0.0-2.0)',
+  ai_interests TEXT COMMENT 'AI兴趣爱好(JSON格式)',
+  enable_human_mode TINYINT DEFAULT 0 COMMENT '是否启用真人模式',
+  human_mode_tip TEXT COMMENT '真人模式提示语',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -94,16 +99,9 @@ CREATE TABLE IF NOT EXISTS api_configs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 默认DeepSeek API配置
-INSERT INTO api_configs (name, api_type, api_key, api_url, model, temperature, max_tokens, timeout_seconds, is_primary, is_active, weight)
-VALUES (
-  'DeepSeek主接口',
-  'deepseek',
-  'sk-9986f51df2334385a2a219790198e4c1',
-  'https://api.deepseek.com/v1/chat/completions',
-  'deepseek-chat',
-  0.7, 2000, 30,
-  1, 1, 10
-);
+-- 注意：首次部署后请在管理后台添加真实的API配置，或通过以下SQL手动插入：
+-- INSERT INTO api_configs (name, api_type, api_key, api_url, model, temperature, max_tokens, timeout_seconds, is_primary, is_active, weight)
+-- VALUES ('DeepSeek主接口', 'deepseek', 'your_api_key_here', 'https://api.deepseek.com/v1/chat/completions', 'deepseek-chat', 0.7, 2000, 30, 1, 1, 10);
 
 -- 对话日志表
 CREATE TABLE IF NOT EXISTS chat_logs (
@@ -145,7 +143,24 @@ CREATE TABLE IF NOT EXISTS ai_memories (
   INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 索引
+-- ==================== 索引优化 ====================
+
+-- 对话日志索引（按时间和风控状态查询）
 CREATE INDEX IF NOT EXISTS idx_chat_logs_created ON chat_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_logs_created_violation ON chat_logs(created_at, is_violation);
+
+-- 产品索引（按状态和分类查询）
 CREATE INDEX IF NOT EXISTS idx_products_active ON products(is_active);
+CREATE INDEX IF NOT EXISTS idx_products_active_category ON products(is_active, category_id);
+
+-- API配置索引（按主API和启用状态查询）
 CREATE INDEX IF NOT EXISTS idx_api_configs_primary ON api_configs(is_primary);
+CREATE INDEX IF NOT EXISTS idx_api_configs_primary_active ON api_configs(is_primary, is_active);
+
+-- AI记忆索引（按会话和时间查询，最重要的优化）
+CREATE INDEX IF NOT EXISTS idx_ai_memories_session ON ai_memories(session_id);
+CREATE INDEX IF NOT EXISTS idx_ai_memories_session_created ON ai_memories(session_id, created_at);
+
+-- 违禁词索引（按启用状态查询）
+CREATE INDEX IF NOT EXISTS idx_banned_words_active ON banned_words(is_active);
+CREATE INDEX IF NOT EXISTS idx_banned_words_active_category ON banned_words(is_active, category);

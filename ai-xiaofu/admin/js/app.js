@@ -9,6 +9,42 @@ const app = createApp({
     const activeMenu = ref('dashboard');
     const saving = ref(false);
 
+    // 页面元信息
+    const menuMeta = {
+      dashboard: {
+        title: '运营概览',
+        eyebrow: 'Dashboard',
+        description: '查看调用量、风控触发与平均响应效率。'
+      },
+      'ai-settings': {
+        title: 'AI 个性设置',
+        eyebrow: 'Persona',
+        description: '调整回复风格、记忆、开场白与系统提示词。'
+      },
+      products: {
+        title: '产品价格库',
+        eyebrow: 'Products',
+        description: '维护建站服务、价格、交付周期与售后说明。'
+      },
+      apis: {
+        title: '大模型 API',
+        eyebrow: 'LLM APIs',
+        description: '管理主备接口、模型参数与连通性测试。'
+      },
+      logs: {
+        title: '对话日志',
+        eyebrow: 'Logs',
+        description: '检索客户问题、AI 回复、响应耗时与风控记录。'
+      },
+      banned: {
+        title: '风控词库',
+        eyebrow: 'Risk Control',
+        description: '维护违禁词、正则规则并进行合规检测。'
+      }
+    };
+
+    const currentPageMeta = computed(() => menuMeta[activeMenu.value] || menuMeta.dashboard);
+
     // 登录
     const loginPassword = ref('');
     const loginLoading = ref(false);
@@ -80,13 +116,32 @@ const app = createApp({
       personality: '', reply_max_length: 500, reply_in_paragraphs: 1,
       proactive_follow_up: 1, ban_internet_slang: 1, ban_marketing_words: 1,
       reply_tone: '专业温和', memory_enabled: 1, memory_retention_days: 30,
-      default_opening: '', fallback_reply: '', custom_system_prompt: ''
+      default_opening: '', fallback_reply: '', custom_system_prompt: '',
+      chat_mode: 'friend', ai_temperature: 0.7, ai_interests: '',
+      enable_human_mode: 0, human_mode_tip: ''
     });
 
     async function loadAiSettings() {
       try {
         const d = await request('/api/ai-settings');
-        if (d.code === 200 && d.data) Object.assign(aiForm, d.data);
+        if (d.code === 200 && d.data) {
+          Object.assign(aiForm, d.data);
+          // 将JSON格式的兴趣爱好转换回多行文本
+          if (d.data.ai_interests) {
+            try {
+              const interests = typeof d.data.ai_interests === 'string'
+                ? JSON.parse(d.data.ai_interests)
+                : d.data.ai_interests;
+              const lines = [];
+              for (const [key, value] of Object.entries(interests)) {
+                lines.push(`${key}：${value}`);
+              }
+              aiForm.ai_interests = lines.join('\n');
+            } catch (e) {
+              aiForm.ai_interests = d.data.ai_interests;
+            }
+          }
+        }
       } catch (e) { console.error(e); }
     }
 
@@ -383,6 +438,7 @@ const app = createApp({
 
     return {
       apiBase, token, loggedIn, activeMenu, saving,
+      menuMeta, currentPageMeta,
       loginPassword, loginLoading, loginError, doLogin, logout,
       stats,
       aiForm, loadAiSettings, saveAiSettings, clearMemories,

@@ -42,7 +42,7 @@
     "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "3.3.4",
+  "libVersion": "3.16.1",
   "appid": "wx233b726405626d04",
   "projectname": "ai-xiaofu",
   "condition": {},
