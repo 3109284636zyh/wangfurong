@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { adminAuth } = require('../middleware/auth');
+const { badRequest, normalizeString } = require('../middleware/validate');
 
 const router = express.Router();
 const DEFAULT_ADMIN_PASSWORD_HASH = '$2a$10$OZtRoR5svU3JYeS2aIPVmOqgISo5T5f8lQaAnzyf30zdLKnp5W29a';
@@ -26,9 +27,9 @@ async function getAdmin() {
 
 // 登录（仅密码，无用户名---文档2.1要求）
 router.post('/login', async (req, res) => {
-  const { password } = req.body;
+  const password = normalizeString(req.body.password, 200);
   if (!password) {
-    return res.json({ code: 400, message: '请输入密码' });
+    return badRequest(res, '请输入密码');
   }
 
   try {
@@ -41,7 +42,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: admin.id, role: 'admin' },
-      process.env.JWT_SECRET || 'xiaofu_jwt_secret_2024_secure',
+      process.env.JWT_SECRET,
       { expiresIn: '30m' }  // 30分钟超时
     );
 

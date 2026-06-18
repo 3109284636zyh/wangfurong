@@ -3,12 +3,48 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const { createRateLimiter } = require('./middleware/rateLimit');
+
+// Express 4 不会自动捕获 async 路由的 Promise 异常。
+// 在加载 routes/* 之前包装 Router，确保异步错误进入统一 errorHandler。
+function patchAsyncRouter(expressInstance) {
+  const originalRouter = expressInstance.Router;
+  const methods = ['get', 'post', 'put', 'delete', 'patch'];
+
+  expressInstance.Router = function createPatchedRouter() {
+    const router = originalRouter.apply(expressInstance, arguments);
+
+    methods.forEach(method => {
+      const originalMethod = router[method];
+      router[method] = function patchedRouteMethod() {
+        const args = Array.prototype.slice.call(arguments);
+        const wrapped = args.map(arg => {
+          if (typeof arg !== 'function' || arg.length === 4) return arg;
+          return function wrappedHandler(req, res, next) {
+            try {
+              const result = arg(req, res, next);
+              if (result && typeof result.catch === 'function') result.catch(next);
+            } catch (err) {
+              next(err);
+            }
+          };
+        });
+        return originalMethod.apply(this, wrapped);
+      };
+    });
+
+    return router;
+  };
+};
+
+patchAsyncRouter(express);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 环境检查
-const requiredEnvVars = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+// 环境检查：开发环境允许本地MySQL空密码，生产环境必须配置DB_PASSWORD
+const requiredEnvVars = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_NAME'];
+if (process.env.NODE_ENV === 'production') requiredEnvVars.push('DB_PASSWORD');
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 if (missingVars.length > 0) {
   console.error('❌ 缺少必需的环境变量:', missingVars.join(', '));
@@ -25,6 +61,8 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+// 在Nginx/反向代理后部署时，确保 req.ip 正确用于限流和日志
+app.set('trust proxy', 1);
 
 // 请求日志中间件
 app.use((req, res, next) => {
@@ -46,6 +84,20 @@ app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'admin', 'index.html'));
 });
+
+// 限流：先对公开高成本接口做严格限制，再对管理接口做常规限制
+app.use('/api/chat/generate', createRateLimiter({
+  scope: 'chat-generate',
+  windowMs: 60 * 1000,
+  max: 10,
+  message: 'AI生成请求过于频繁，请稍后再试'
+}));
+app.use('/api', createRateLimiter({
+  scope: 'api-global',
+  windowMs: 60 * 1000,
+  max: 120,
+  message: '请求过于频繁，请稍后再试'
+}));
 
 // API路由
 app.use('/api/auth', require('./routes/auth'));

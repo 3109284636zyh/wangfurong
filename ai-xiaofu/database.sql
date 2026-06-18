@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS ai_settings (
   default_opening TEXT COMMENT '默认开场白',
   fallback_reply TEXT COMMENT '兜底回复',
   custom_system_prompt TEXT COMMENT '自定义系统提示词',
-  chat_mode VARCHAR(50) DEFAULT 'friend' COMMENT '聊天形态：friend(朋友)/bestie(闺蜜)/brother(兄弟)/lover(恋人)',
+  chat_mode VARCHAR(50) DEFAULT 'friend' COMMENT '聊天形态：daily(日常)/friend(朋友)/bestie(闺蜜)/brother(兄弟)/lover(恋人)',
   ai_temperature DECIMAL(3,2) DEFAULT 0.7 COMMENT 'AI回复随机性(0.0-2.0)',
   ai_interests TEXT COMMENT 'AI兴趣爱好(JSON格式)',
   enable_human_mode TINYINT DEFAULT 0 COMMENT '是否启用真人模式',
@@ -40,12 +40,15 @@ CREATE TABLE IF NOT EXISTS ai_settings (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO ai_settings (personality, reply_max_length, reply_in_paragraphs, proactive_follow_up, ban_internet_slang, ban_marketing_words, reply_tone, memory_enabled, memory_retention_days, default_opening, fallback_reply)
+INSERT INTO ai_settings (personality, reply_max_length, reply_in_paragraphs, proactive_follow_up, ban_internet_slang, ban_marketing_words, reply_tone, memory_enabled, memory_retention_days, default_opening, fallback_reply, chat_mode, ai_temperature, ai_interests, enable_human_mode, human_mode_tip)
 VALUES (
   '你是一个专业耐心的建站客服，精通网站建设、小程序开发、服务器配置等技术服务。你的回答专业准确、报价合理透明、态度温和有礼。',
   500, 1, 1, 1, 1, '专业温和', 1, 30,
   '您好！我是您的专属建站顾问小福😊 请问有什么可以帮您的？无论是建站咨询、报价了解还是技术问题，我都可以为您详细解答~',
-  '您好，您的问题我需要进一步了解才能给您准确答复。方便的话可以详细描述一下您的需求，比如您想做什么类型的网站、预算大概多少呢？我会根据您的需求为您推荐最合适的方案~'
+  '您好，您的问题我需要进一步了解才能给您准确答复。方便的话可以详细描述一下您的需求，比如您想做什么类型的网站、预算大概多少呢？我会根据您的需求为您推荐最合适的方案~',
+  'friend', 0.7,
+  '{"爱吃":"奶茶、火锅、甜品","爱玩":"看电影、听音乐、散步","爱看":"悬疑小说、治愈系动漫","性格":"温柔体贴、善解人意、乐观开朗"}',
+  1, '小福正在用心回复你~'
 );
 
 -- 产品分类表
@@ -144,23 +147,39 @@ CREATE TABLE IF NOT EXISTS ai_memories (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ==================== 索引优化 ====================
+-- MySQL 5.7/8.0 均不可靠支持 CREATE INDEX IF NOT EXISTS，因此用过程做幂等创建。
 
--- 对话日志索引（按时间和风控状态查询）
-CREATE INDEX IF NOT EXISTS idx_chat_logs_created ON chat_logs(created_at);
-CREATE INDEX IF NOT EXISTS idx_chat_logs_created_violation ON chat_logs(created_at, is_violation);
+DROP PROCEDURE IF EXISTS add_index_if_missing;
 
--- 产品索引（按状态和分类查询）
-CREATE INDEX IF NOT EXISTS idx_products_active ON products(is_active);
-CREATE INDEX IF NOT EXISTS idx_products_active_category ON products(is_active, category_id);
+DELIMITER //
+CREATE PROCEDURE add_index_if_missing(
+  IN p_table_name VARCHAR(64),
+  IN p_index_name VARCHAR(64),
+  IN p_columns VARCHAR(500)
+)
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = p_table_name
+      AND index_name = p_index_name
+  ) THEN
+    SET @ddl = CONCAT('ALTER TABLE `', p_table_name, '` ADD INDEX `', p_index_name, '` (', p_columns, ')');
+    PREPARE stmt FROM @ddl;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+  END IF;
+END//
+DELIMITER ;
 
--- API配置索引（按主API和启用状态查询）
-CREATE INDEX IF NOT EXISTS idx_api_configs_primary ON api_configs(is_primary);
-CREATE INDEX IF NOT EXISTS idx_api_configs_primary_active ON api_configs(is_primary, is_active);
+CALL add_index_if_missing('chat_logs', 'idx_chat_logs_created', '`created_at`');
+CALL add_index_if_missing('chat_logs', 'idx_created_violation', '`created_at`, `is_violation`');
+CALL add_index_if_missing('products', 'idx_products_active', '`is_active`');
+CALL add_index_if_missing('products', 'idx_active_category', '`is_active`, `category_id`');
+CALL add_index_if_missing('api_configs', 'idx_api_configs_primary', '`is_primary`');
+CALL add_index_if_missing('api_configs', 'idx_primary_active', '`is_primary`, `is_active`');
+CALL add_index_if_missing('ai_memories', 'idx_session_created', '`session_id`, `created_at`');
+CALL add_index_if_missing('banned_words', 'idx_banned_words_active', '`is_active`');
+CALL add_index_if_missing('banned_words', 'idx_active_category', '`is_active`, `category`');
 
--- AI记忆索引（按会话和时间查询，最重要的优化）
-CREATE INDEX IF NOT EXISTS idx_ai_memories_session ON ai_memories(session_id);
-CREATE INDEX IF NOT EXISTS idx_ai_memories_session_created ON ai_memories(session_id, created_at);
-
--- 违禁词索引（按启用状态查询）
-CREATE INDEX IF NOT EXISTS idx_banned_words_active ON banned_words(is_active);
-CREATE INDEX IF NOT EXISTS idx_banned_words_active_category ON banned_words(is_active, category);
+DROP PROCEDURE add_index_if_missing;

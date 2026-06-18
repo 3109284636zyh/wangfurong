@@ -8,72 +8,89 @@ Page({
     errorMsg: '',
     responseInfo: '',
     isViolation: false,
-    // 模式：work=普通聊天模式(客服), chat=AI小福模式
-    chatMode: 'work',
-    // AI小福聊天模式的历史记录
-    chatHistory: []
+    showAssistant: false,
+    sampleQuestions: [
+      '客户问：做一个企业官网多少钱？包含哪些服务？',
+      '客户问：多久能做好小程序？后期能不能维护？',
+      '客户问：我只有一个想法，你们能不能帮我整理方案？'
+    ],
+    quickStats: [
+      { value: '合规', label: '客服回复风控' },
+      { value: '产品库', label: '自动结合报价' },
+      { value: 'AI', label: '小福陪伴聊天' }
+    ]
   },
 
   onLoad: function() {
-    // 恢复上次的模式
-    var savedMode = wx.getStorageSync('chatMode');
-    if (savedMode) {
-      this.setData({ chatMode: savedMode });
-    }
-    // 恢复聊天历史
-    var savedHistory = wx.getStorageSync('chatHistory');
-    if (savedHistory) {
-      try {
-        this.setData({ chatHistory: JSON.parse(savedHistory) });
-      } catch (e) {
-        this.setData({ chatHistory: [] });
-      }
-    }
-    this.fetchOpening();
+    this.loadAssistantPreset();
   },
 
-  fetchOpening: function() {
-    wx.request({
-      url: app.globalData.apiBase + '/api/chat/public-info',
-      success: function(res) {
-        if (res.data && res.data.code === 200 && res.data.data && res.data.data.opening) {
-          app.globalData.opening = res.data.data.opening;
-        }
-      }
+  onShow: function() {
+    this.loadAssistantPreset();
+  },
+
+  loadAssistantPreset: function() {
+    var preset = wx.getStorageSync('assistantPreset');
+    if (preset) {
+      this.setData({
+        inputText: preset,
+        showAssistant: true,
+        outputText: '',
+        errorMsg: '',
+        responseInfo: '',
+        isViolation: false
+      });
+      wx.removeStorageSync('assistantPreset');
+    }
+  },
+
+  goProducts: function() {
+    wx.switchTab({ url: '/pages/ecommerce/ecommerce' });
+  },
+
+  goChat: function() {
+    var chatForm = wx.getStorageSync('chatForm') || app.globalData.chatModeDefault || 'friend';
+    wx.navigateTo({
+      url: '/pages/chat/chat?chatForm=' + chatForm
     });
   },
 
-  // 切换模式
-  switchMode: function(e) {
-    var mode = e.currentTarget.dataset.mode;
-    if (mode === this.data.chatMode) return;
+  goProfile: function() {
+    wx.switchTab({ url: '/pages/profile/profile' });
+  },
 
+  openAssistant: function() {
+    this.setData({ showAssistant: true });
+  },
+
+  closeAssistant: function() {
+    this.setData({ showAssistant: false });
+  },
+
+  toggleAssistant: function() {
+    this.setData({ showAssistant: !this.data.showAssistant });
+  },
+
+  useSample: function(e) {
+    var text = e.currentTarget.dataset.text || '';
     this.setData({
-      chatMode: mode,
-      inputText: '',
-      outputText: '',
+      inputText: text,
+      showAssistant: true,
       errorMsg: '',
+      outputText: '',
       responseInfo: '',
       isViolation: false
     });
-    wx.setStorageSync('chatMode', mode);
-
-    if (mode === 'chat') {
-      wx.showToast({ title: '已进入AI小福模式 💕', icon: 'none', duration: 1500 });
-    } else {
-      wx.showToast({ title: '已切换到普通聊天模式 💼', icon: 'none', duration: 1500 });
-    }
   },
 
   onInputChange: function(e) {
     this.setData({ inputText: e.detail.value, errorMsg: '' });
   },
 
-  // 核心：发送消息
   generateReply: function() {
     var question = this.data.inputText.trim();
     if (!question) {
-      wx.showToast({ title: '请输入内容', icon: 'none' });
+      wx.showToast({ title: '请输入客户咨询内容', icon: 'none' });
       return;
     }
 
@@ -88,14 +105,16 @@ Page({
       outputText: '',
       errorMsg: '',
       responseInfo: '',
-      isViolation: false
+      isViolation: false,
+      showAssistant: true
     });
 
     app.request('/api/chat/generate', 'POST', {
       question: question,
       session_id: app.globalData.sessionId,
-      mode: this.data.chatMode
-    }).then(function(res) {
+      mode: 'work',
+      chat_form: wx.getStorageSync('chatForm') || app.globalData.chatModeDefault || 'friend'
+    }, { timeout: 20000 }).then(function(res) {
       if (res.code === 200) {
         var info = 'API: ' + (res.data.api || '') + ' · ' + (res.data.response_time_ms || 0) + 'ms';
         that.setData({
@@ -104,20 +123,6 @@ Page({
           isViolation: res.data.is_violation || false,
           generating: false
         });
-
-        // AI小福模式：保存对话历史
-        if (that.data.chatMode === 'chat') {
-          var history = that.data.chatHistory.slice(-40); // 最多保留40条
-          history.push({ role: 'user', content: question });
-          history.push({ role: 'assistant', content: res.data.reply });
-          that.setData({ chatHistory: history });
-          wx.setStorageSync('chatHistory', JSON.stringify(history));
-        }
-
-        // AI小福模式：生成完成后清空输入框
-        if (that.data.chatMode === 'chat') {
-          that.setData({ inputText: '' });
-        }
 
         if (res.data.type === 'fallback') {
           wx.showToast({ title: '已触发默认回复', icon: 'none' });
@@ -138,42 +143,17 @@ Page({
     });
   },
 
-  // 一键清空
   clearAll: function() {
-    var that = this;
-    // AI小福模式：清空聊天历史
-    if (this.data.chatMode === 'chat') {
-      wx.showModal({
-        title: '清空对话',
-        content: '确定要清空和小福的全部对话记录吗？',
-        success: function(modalRes) {
-          if (modalRes.confirm) {
-            that.setData({
-              inputText: '',
-              outputText: '',
-              errorMsg: '',
-              responseInfo: '',
-              isViolation: false,
-              chatHistory: []
-            });
-            wx.setStorageSync('chatHistory', '[]');
-            wx.showToast({ title: '对话已清空', icon: 'success', duration: 1000 });
-          }
-        }
-      });
-    } else {
-      this.setData({
-        inputText: '',
-        outputText: '',
-        errorMsg: '',
-        responseInfo: '',
-        isViolation: false
-      });
-      wx.showToast({ title: '已清空', icon: 'success', duration: 1000 });
-    }
+    this.setData({
+      inputText: '',
+      outputText: '',
+      errorMsg: '',
+      responseInfo: '',
+      isViolation: false
+    });
+    wx.showToast({ title: '已清空', icon: 'success', duration: 1000 });
   },
 
-  // 一键复制结果
   copyResult: function() {
     var text = this.data.outputText;
     if (!text) {
@@ -194,7 +174,7 @@ Page({
 
   onShareAppMessage: function() {
     return {
-      title: 'AI小福 - 建站接单客服助手，一键生成合规回复',
+      title: 'AI小福 - 建站接单客服助手',
       path: '/pages/index/index'
     };
   }

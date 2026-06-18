@@ -13,48 +13,11 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'PingFang SC','Microsoft YaHei',sans-serif; }
-    #app { min-height: 100vh; background: #f0f2f5; }
-
-    /* 登录 */
-    .login-wrapper { min-height: 100vh; position: relative; display: flex; align-items: center; justify-content: center; padding: 42px; overflow: hidden; background: radial-gradient(circle at 12% 18%, rgba(103,194,58,0.22), transparent 28%), radial-gradient(circle at 82% 12%, rgba(64,158,255,0.28), transparent 30%), linear-gradient(135deg, #111827 0%, #1e1b4b 42%, #764ba2 100%); }
-    .login-wrapper::before, .login-wrapper::after { content: ''; position: absolute; width: 360px; height: 360px; border-radius: 50%; filter: blur(8px); opacity: .6; }
-    .login-wrapper::before { left: -120px; bottom: -120px; background: rgba(102,126,234,0.34); }
-    .login-wrapper::after { right: -100px; top: -80px; background: rgba(118,75,162,0.42); }
-    .login-shell { position: relative; z-index: 1; width: min(1080px, 100%); display: grid; grid-template-columns: 1.05fr 420px; gap: 56px; align-items: center; }
-    .login-hero { color: #fff; padding: 18px 0; }
-    .login-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; margin-bottom: 26px; border: 1px solid rgba(255,255,255,0.24); border-radius: 999px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.86); font-size: 13px; backdrop-filter: blur(16px); }
-    .login-badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #67C23A; box-shadow: 0 0 18px rgba(103,194,58,0.9); }
-    .login-title { max-width: 560px; font-size: 48px; line-height: 1.12; letter-spacing: -1px; margin-bottom: 18px; font-weight: 800; }
-    .login-description { max-width: 560px; color: rgba(255,255,255,0.76); font-size: 16px; line-height: 1.8; margin-bottom: 32px; }
-    .login-feature-list { display: grid; gap: 14px; max-width: 520px; }
-    .login-feature-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.16); border-radius: 16px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.88); box-shadow: 0 18px 42px rgba(0,0,0,0.12); backdrop-filter: blur(14px); }
-    .login-feature-item::before { content: '✓'; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none; border-radius: 50%; background: rgba(64,158,255,0.22); color: #fff; font-weight: 700; }
-    .login-panel { display: flex; justify-content: flex-end; }
-    .login-card { width: 100%; padding: 42px 38px 34px; background: rgba(255,255,255,0.96); border: 1px solid rgba(255,255,255,0.72); border-radius: 28px; text-align: center; box-shadow: 0 30px 80px rgba(8,15,44,0.34); backdrop-filter: blur(22px); }
-    .logo-mark { width: 68px; height: 68px; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; border-radius: 22px; background: linear-gradient(135deg, #667eea 0%, #409EFF 48%, #764ba2 100%); color: #fff; font-size: 23px; font-weight: 800; letter-spacing: .5px; box-shadow: 0 18px 34px rgba(64,158,255,0.34); }
-    .login-card h2 { font-size: 26px; margin-bottom: 8px; color: #303133; letter-spacing: .5px; }
-    .login-card .subtitle { color: #909399; font-size: 14px; margin-bottom: 30px; }
-    .login-form .el-form-item { margin-bottom: 18px; }
-    .login-card .el-input__wrapper { min-height: 48px; border-radius: 14px; box-shadow: 0 0 0 1px #dcdfe6 inset; transition: box-shadow .2s, transform .2s; }
-    .login-card .el-input__wrapper:hover { box-shadow: 0 0 0 1px rgba(64,158,255,0.45) inset; }
-    .login-card .el-input__wrapper.is-focus { box-shadow: 0 0 0 1px #409EFF inset, 0 10px 28px rgba(64,158,255,0.16); }
-    .login-submit { width: 100%; height: 48px; border: none; border-radius: 14px; font-weight: 700; letter-spacing: 2px; background: linear-gradient(135deg, #667eea 0%, #409EFF 100%); box-shadow: 0 16px 30px rgba(64,158,255,0.28); }
-    .login-submit:hover, .login-submit:focus { background: linear-gradient(135deg, #5d73dc 0%, #337ecc 100%); transform: translateY(-1px); }
-    .login-error { color: #F56C6C; font-size: 13px; min-height: 20px; margin-top: 2px; }
-    .login-footer { margin-top: 18px; color: #909399; font-size: 12px; }
-    @media (max-width: 900px) { .login-wrapper { padding: 28px; } .login-shell { grid-template-columns: 1fr; max-width: 440px; } .login-hero { display: none; } .login-panel { justify-content: center; } }
-    @media (max-width: 480px) { .login-wrapper { padding: 20px; } .login-card { padding: 34px 24px 28px; border-radius: 24px; } .login-card h2 { font-size: 24px; } }
-
-    /* 布局 */
-    .layout { display: flex; min-height: 100vh; }
-    .sidebar { width: 220px; background: #304156; color: #bfcbd9; position: fixed; top: 0; left: 0; bottom: 0; z-index: 10; overflow-y: auto; }
-    .sidebar-header { padding: 20px 16px; font-size: 17px; font-weight: 700; color: #fff; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .sidebar .el-menu { border-right: none; background: #304156; }
-    .main-area { margin-left: 220px; flex: 1; padding: 24px; min-height: 100vh; }
+    [v-cloak] { display: none; }
   </style>
 </head>
 <body>
-<div id="app">
+<div id="app" class="admin-app" v-cloak>
 
   <!-- ========== 登录页 ========== -->
   <div v-if="!loggedIn" class="login-wrapper">
@@ -94,7 +57,7 @@
 
   <!-- ========== 主界面 ========== -->
   <div v-else class="admin-shell">
-    <aside class="admin-sidebar">
+    <aside class="admin-sidebar" :class="{ 'is-open': mobileMenuOpen }">
       <div class="brand-card">
         <div class="brand-mark">AI</div>
         <div class="brand-text">
@@ -103,19 +66,29 @@
         </div>
       </div>
       <el-menu :default-active="activeMenu" @select="switchMenu" class="admin-menu">
-        <el-menu-item index="dashboard"><el-icon><DataAnalysis /></el-icon> 仪表盘</el-menu-item>
-        <el-menu-item index="ai-settings"><el-icon><Setting /></el-icon> AI个性设置</el-menu-item>
-        <el-menu-item index="products"><el-icon><Goods /></el-icon> 产品库管理</el-menu-item>
-        <el-menu-item index="apis"><el-icon><Connection /></el-icon> API管理</el-menu-item>
-        <el-menu-item index="logs"><el-icon><Document /></el-icon> 对话日志</el-menu-item>
-        <el-menu-item index="banned"><el-icon><WarningFilled /></el-icon> 风控违禁词库</el-menu-item>
+        <el-menu-item index="dashboard"><el-icon><DataAnalysis></DataAnalysis></el-icon> 仪表盘</el-menu-item>
+        <el-menu-item index="ai-settings"><el-icon><Setting></Setting></el-icon> AI个性设置</el-menu-item>
+        <el-menu-item index="products"><el-icon><Goods></Goods></el-icon> 产品库管理</el-menu-item>
+        <el-menu-item index="apis"><el-icon><Connection></Connection></el-icon> API管理</el-menu-item>
+        <el-menu-item index="logs"><el-icon><Document></Document></el-icon> 对话日志</el-menu-item>
+        <el-menu-item index="banned"><el-icon><WarningFilled></WarningFilled></el-icon> 风控违禁词库</el-menu-item>
       </el-menu>
       <div class="sidebar-footer">
-        <el-button @click="logout" class="logout-button">🚪 退出登录</el-button>
+        <el-button @click="logout" class="logout-button">退出登录</el-button>
       </div>
     </aside>
+    <div v-if="mobileMenuOpen" class="sidebar-scrim" @click="mobileMenuOpen=false"></div>
 
     <main class="admin-main">
+      <header class="admin-topbar">
+        <el-button class="mobile-menu-button" plain @click="mobileMenuOpen=true">菜单</el-button>
+        <div class="topbar-copy">
+          <div class="topbar-eyebrow">{{ currentPageMeta.eyebrow }}</div>
+          <h1>{{ currentPageMeta.title }}</h1>
+          <p>{{ currentPageMeta.description }}</p>
+        </div>
+        <el-button class="topbar-logout" plain @click="logout">退出登录</el-button>
+      </header>
 
       <!-- 仪表盘 -->
       <div v-show="activeMenu==='dashboard'">
@@ -133,7 +106,7 @@
                 <div class="stat-value">{{ s.value }}</div>
               </div>
               <div class="stat-icon">
-                <el-icon><component :is="['DataAnalysis', 'TrendCharts', 'WarningFilled', 'Timer'][index]" /></el-icon>
+                <el-icon><component :is="['DataAnalysis', 'TrendCharts', 'WarningFilled', 'Timer'][index]"></component></el-icon>
               </div>
             </div>
           </el-card>
@@ -154,6 +127,10 @@
             <el-divider content-position="left">💬 AI小福聊天形态</el-divider>
             <el-form-item label="聊天形态">
               <el-select v-model="aiForm.chat_mode" placeholder="选择聊天形态">
+                <el-option label="🌤️ 日常聊天" value="daily">
+                  <span>🌤️ 日常聊天</span>
+                  <span style="color: #909399; font-size: 12px; margin-left: 8px;">轻松自然，陪聊生活琐事</span>
+                </el-option>
                 <el-option label="💬 朋友模式" value="friend">
                   <span>💬 朋友模式</span>
                   <span style="color: #909399; font-size: 12px; margin-left: 8px;">真诚阳光，像知心朋友</span>
@@ -177,8 +154,8 @@
             <!-- AI回复随机性 -->
             <el-form-item label="AI回复随机性">
               <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
-                <el-slider v-model="aiForm.ai_temperature" :min="0" :max="2" :step="0.1" :show-tooltip="true" style="flex: 1; max-width: 400px;"/>
-                <el-input-number v-model="aiForm.ai_temperature" :min="0" :max="2" :step="0.1" :precision="1" style="width: 120px;"/>
+                <el-slider v-model="aiForm.ai_temperature" :min="0" :max="2" :step="0.1" :show-tooltip="true" style="flex: 1; max-width: 400px;"></el-slider>
+                <el-input-number v-model="aiForm.ai_temperature" :min="0" :max="2" :step="0.1" :precision="1" style="width: 120px;"></el-input-number>
               </div>
               <span class="helper-text">数值越高回复越随机创意（0-2），越低越稳定一致。推荐0.7</span>
             </el-form-item>
@@ -191,7 +168,7 @@
 
             <!-- 真人模式 -->
             <el-form-item label="真人模式">
-              <el-switch v-model="aiForm.enable_human_mode" :active-value="1" :inactive-value="0"/>
+              <el-switch v-model="aiForm.enable_human_mode" :active-value="1" :inactive-value="0"></el-switch>
               <span class="helper-text" style="margin-left: 12px;">开启后，小程序可进入独立的真人聊天页面</span>
             </el-form-item>
             <el-form-item label="真人模式提示" v-if="aiForm.enable_human_mode">
@@ -206,21 +183,21 @@
             <el-row :gutter="16">
               <el-col :span="8">
                 <el-form-item label="回复字数限制">
-                  <el-input-number v-model="aiForm.reply_max_length" :min="50" :max="2000" :step="50"/>
+                  <el-input-number v-model="aiForm.reply_max_length" :min="50" :max="2000" :step="50"></el-input-number>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item label="回复语气">
                   <el-select v-model="aiForm.reply_tone">
-                    <el-option label="专业温和" value="专业温和"/>
-                    <el-option label="直白干练" value="直白干练"/>
-                    <el-option label="热情亲切" value="热情亲切"/>
+                    <el-option label="专业温和" value="专业温和"></el-option>
+                    <el-option label="直白干练" value="直白干练"></el-option>
+                    <el-option label="热情亲切" value="热情亲切"></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item label="记忆保存天数">
-                  <el-input-number v-model="aiForm.memory_retention_days" :min="1" :max="365"/>
+                  <el-input-number v-model="aiForm.memory_retention_days" :min="1" :max="365"></el-input-number>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -250,56 +227,86 @@
       </div>
 
       <!-- 产品库管理 -->
-      <div v-show="activeMenu==='products'">
-        <div class="page-title-group">
-          <div class="eyebrow">Products</div>
-          <h2>📦 建站产品价格库</h2>
-          <p class="page-description">维护建站服务、价格、交付周期与售后说明。</p>
-        </div>
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <el-button type="primary" @click="showProductDialog()">➕ 添加产品</el-button>
-            <el-button @click="exportProducts">📥 导出Excel</el-button>
-            <el-upload :action="apiBase+'/api/products/import'" :headers="uploadHeaders" accept=".xlsx,.xls" :on-success="onImportSuccess" :show-file-list="false">
-              <el-button>📤 批量导入Excel</el-button>
-            </el-upload>
+      <div v-show="activeMenu==='products'" class="product-page">
+        <section class="product-hero">
+          <div>
+            <div class="eyebrow">Products</div>
+            <h2>建站产品价格库</h2>
+            <p>用卡片管理产品，不再挤在窄表格里。价格、交付、包含服务、售后保障一眼看清。</p>
           </div>
-          <div class="toolbar-right">
-            <el-input v-model="productSearch" placeholder="搜索产品..." clearable @input="loadProducts"/>
-            <el-select v-model="productCategoryFilter" placeholder="分类筛选" clearable @change="loadProducts">
-              <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id"/>
-            </el-select>
+          <div class="product-hero-stats">
+            <div class="product-mini-stat">
+              <strong>{{ productTotal }}</strong>
+              <span>全部产品</span>
+            </div>
+            <div class="product-mini-stat">
+              <strong>{{ activeProductCount }}</strong>
+              <span>当前页上架</span>
+            </div>
           </div>
-        </div>
-        <el-card class="data-card">
-          <el-table :data="productList" stripe>
-            <el-table-column prop="name" label="产品名称" width="160"/>
-            <el-table-column prop="category_name" label="分类" width="110"/>
-            <el-table-column prop="standard_price" label="标准价" width="90">
-              <template #default="scope">¥{{ scope.row.standard_price }}</template>
-            </el-table-column>
-            <el-table-column prop="discount_price" label="优惠价" width="90">
-              <template #default="scope">¥{{ scope.row.discount_price }}</template>
-            </el-table-column>
-            <el-table-column prop="delivery_days" label="交付周期" width="100"/>
-            <el-table-column label="状态" width="80">
-              <template #default="scope">
-                <el-tag :type="scope.row.is_active?'success':'info'">{{ scope.row.is_active?'上架':'下架' }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="description" label="服务介绍" min-width="200" show-overflow-tooltip/>
-            <el-table-column label="操作" width="240" fixed="right">
-              <template #default="scope">
-                <el-button size="small" @click="showProductDialog(scope.row)">编辑</el-button>
-                <el-button size="small" :type="scope.row.is_active?'warning':'success'" @click="toggleProduct(scope.row)">
-                  {{ scope.row.is_active?'下架':'上架' }}
-                </el-button>
-                <el-button size="small" type="danger" @click="deleteProduct(scope.row.id)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          <div class="pagination-wrap">
-            <el-pagination background layout="prev,pager,next" :total="productTotal" :page-size="20" @current-change="p=>loadProducts(p)"/>
+        </section>
+
+        <el-card class="product-toolbar-card" shadow="never">
+          <div class="product-toolbar">
+            <div class="product-filter-grid">
+              <el-input v-model="productSearch" placeholder="搜索产品名称或介绍" clearable @input="queueProductSearch" @clear="applyProductFilters"></el-input>
+              <el-select v-model="productCategoryFilter" placeholder="全部分类" clearable @change="applyProductFilters">
+                <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id"></el-option>
+              </el-select>
+              <el-button @click="resetProductFilters">重置</el-button>
+            </div>
+            <div class="product-action-row">
+              <el-button type="primary" @click="showProductDialog()">添加产品</el-button>
+              <el-button @click="exportProducts">导出 Excel</el-button>
+              <el-upload name="file" :action="apiBase+'/api/products/import'" :headers="uploadHeaders" accept=".xlsx,.xls" :on-success="onImportSuccess" :on-error="onImportError" :show-file-list="false">
+                <el-button>批量导入 Excel</el-button>
+              </el-upload>
+            </div>
+          </div>
+        </el-card>
+
+        <el-card class="product-list-card" shadow="never" v-loading="productLoading">
+          <el-empty v-if="!productLoading && !productList.length" description="暂无匹配产品">
+            <el-button type="primary" @click="showProductDialog()">添加产品</el-button>
+            <el-button @click="resetProductFilters">清空筛选</el-button>
+          </el-empty>
+
+          <div v-else class="product-grid">
+            <article v-for="item in productList" :key="item.id" class="product-card">
+              <header class="product-card-header">
+                <div>
+                  <h3>{{ item.name || '未命名产品' }}</h3>
+                  <div class="product-meta">
+                    <span>{{ item.category_name || '未分类' }}</span>
+                    <span>{{ item.delivery_days || '未设置交付周期' }}</span>
+                  </div>
+                </div>
+                <el-tag :type="item.is_active ? 'success' : 'info'">{{ item.is_active ? '上架' : '下架' }}</el-tag>
+              </header>
+
+              <p class="product-description">{{ item.description || '暂无服务介绍' }}</p>
+
+              <div class="product-price-strip">
+                <div><span>标准价</span><strong>¥{{ money(item.standard_price) }}</strong></div>
+                <div><span>优惠价</span><strong class="is-accent">¥{{ money(item.discount_price) }}</strong></div>
+              </div>
+
+              <div class="product-service-grid">
+                <section><span>包含服务</span><p>{{ item.included_services || '未填写' }}</p></section>
+                <section><span>不包含服务</span><p>{{ item.excluded_services || '未填写' }}</p></section>
+                <section class="is-wide"><span>售后保障</span><p>{{ item.after_sales || '未填写' }}</p></section>
+              </div>
+
+              <footer class="product-card-actions">
+                <el-button @click="showProductDialog(item)">编辑</el-button>
+                <el-button :type="item.is_active ? 'warning' : 'success'" plain @click="toggleProduct(item)">{{ item.is_active ? '下架' : '上架' }}</el-button>
+                <el-button type="danger" plain @click="deleteProduct(item.id)">删除</el-button>
+              </footer>
+            </article>
+          </div>
+
+          <div class="pagination-wrap" v-if="productTotal > 0">
+            <el-pagination background layout="total, prev, pager, next" :current-page="productPage" :page-size="productPageSize" :total="productTotal" @current-change="loadProducts"></el-pagination>
           </div>
         </el-card>
       </div>
@@ -316,13 +323,13 @@
         </div>
         <el-card class="data-card">
           <el-table :data="apiList" stripe>
-            <el-table-column prop="name" label="名称" width="140"/>
+            <el-table-column prop="name" label="名称" width="140"></el-table-column>
             <el-table-column prop="api_type" label="类型" width="100">
               <template #default="scope"><el-tag size="small">{{ scope.row.api_type }}</el-tag></template>
             </el-table-column>
-            <el-table-column prop="model" label="模型" width="160"/>
-            <el-table-column prop="api_key" label="API Key" width="180"/>
-            <el-table-column prop="temperature" label="温度" width="70"/>
+            <el-table-column prop="model" label="模型" width="160"></el-table-column>
+            <el-table-column prop="api_key" label="API Key" width="180"></el-table-column>
+            <el-table-column prop="temperature" label="温度" width="70"></el-table-column>
             <el-table-column label="主接口" width="90">
               <template #default="scope">
                 <el-tag v-if="scope.row.is_primary" type="danger" size="small">主API</el-tag>
@@ -350,8 +357,8 @@
         </div>
         <div class="toolbar">
           <div class="toolbar-left">
-            <el-input v-model="logSearch" placeholder="搜索提问/回复内容..." clearable @input="loadLogs"/>
-            <el-date-picker v-model="logDateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" @change="loadLogs"/>
+            <el-input v-model="logSearch" placeholder="搜索提问/回复内容..." clearable @input="loadLogs"></el-input>
+            <el-date-picker v-model="logDateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" @change="loadLogs"></el-date-picker>
             <el-button @click="loadLogs">查询</el-button>
           </div>
           <div class="toolbar-right">
@@ -360,17 +367,17 @@
         </div>
         <el-card class="data-card">
           <el-table :data="logList" stripe>
-            <el-table-column prop="user_question" label="客户提问" min-width="200" show-overflow-tooltip/>
-            <el-table-column prop="ai_reply" label="AI回复" min-width="250" show-overflow-tooltip/>
-            <el-table-column prop="api_name" label="API渠道" width="140"/>
-            <el-table-column prop="response_time_ms" label="耗时(ms)" width="90"/>
+            <el-table-column prop="user_question" label="客户提问" min-width="200" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="ai_reply" label="AI回复" min-width="250" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="api_name" label="API渠道" width="140"></el-table-column>
+            <el-table-column prop="response_time_ms" label="耗时(ms)" width="90"></el-table-column>
             <el-table-column label="风控" width="70">
               <template #default="scope">
                 <el-tag v-if="scope.row.is_violation" type="danger" size="small">触发</el-tag>
                 <span v-else style="color:#67C23A;">✓</span>
               </template>
             </el-table-column>
-            <el-table-column prop="created_at" label="时间" width="170"/>
+            <el-table-column prop="created_at" label="时间" width="170"></el-table-column>
             <el-table-column label="操作" width="60">
               <template #default="scope">
                 <el-button size="small" type="danger" @click="deleteLog(scope.row.id)">删除</el-button>
@@ -393,13 +400,13 @@
         <div class="toolbar">
           <div class="toolbar-left">
             <el-button type="primary" @click="showBannedDialog()">➕ 添加违禁词</el-button>
-            <el-input v-model="bannedCheckText" placeholder="输入内容检测是否违规..." clearable/>
+            <el-input v-model="bannedCheckText" placeholder="输入内容检测是否违规..." clearable></el-input>
             <el-button @click="checkBannedText">检测</el-button>
           </div>
         </div>
         <el-card class="data-card">
           <el-table :data="bannedList" stripe>
-            <el-table-column prop="word" label="违禁词" width="200"/>
+            <el-table-column prop="word" label="违禁词" width="200"></el-table-column>
             <el-table-column prop="category" label="分类" width="120">
               <template #default="scope"><el-tag size="small">{{ scope.row.category }}</el-tag></template>
             </el-table-column>
@@ -425,29 +432,29 @@
   </div>
 
   <!-- ========== 弹窗：产品编辑 ========== -->
-  <el-dialog v-model="productDialogVisible" :title="editingProduct.id?'编辑产品':'添加产品'" width="680px" @closed="resetProductForm">
-    <el-form :model="productForm" label-width="110px">
+  <el-dialog v-model="productDialogVisible" class="admin-dialog product-edit-dialog" modal-class="admin-modal" :title="editingProduct.id?'编辑产品':'添加产品'" width="min(920px, calc(100vw - 32px))" @closed="resetProductForm">
+    <el-form ref="productFormRef" :model="productForm" :rules="productRules" label-position="top" class="product-form">
       <el-row :gutter="16">
-        <el-col :span="12">
-          <el-form-item label="产品名称"><el-input v-model="productForm.name"/></el-form-item>
+        <el-col :xs="24" :sm="12">
+          <el-form-item label="产品名称" prop="name"><el-input v-model="productForm.name"></el-input></el-form-item>
         </el-col>
-        <el-col :span="12">
-          <el-form-item label="产品分类">
-            <el-select v-model="productForm.category_id" clearable>
-              <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id"/>
+        <el-col :xs="24" :sm="12">
+          <el-form-item label="产品分类" prop="category_id">
+            <el-select v-model="productForm.category_id" clearable style="width:100%">
+              <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
       </el-row>
-      <el-form-item label="服务介绍"><el-input v-model="productForm.description" type="textarea" :rows="2"/></el-form-item>
+      <el-form-item label="服务介绍"><el-input v-model="productForm.description" type="textarea" :rows="3"></el-input></el-form-item>
       <el-row :gutter="16">
-        <el-col :span="8"><el-form-item label="标准售价"><el-input v-model="productForm.standard_price" type="number"/></el-form-item></el-col>
-        <el-col :span="8"><el-form-item label="优惠价"><el-input v-model="productForm.discount_price" type="number"/></el-form-item></el-col>
-        <el-col :span="8"><el-form-item label="交付周期"><el-input v-model="productForm.delivery_days"/></el-form-item></el-col>
+        <el-col :xs="24" :sm="12" :md="8"><el-form-item label="标准售价"><el-input-number v-model="productForm.standard_price" :min="0" :precision="2" :controls="false"></el-input-number></el-form-item></el-col>
+        <el-col :xs="24" :sm="12" :md="8"><el-form-item label="优惠价"><el-input-number v-model="productForm.discount_price" :min="0" :precision="2" :controls="false"></el-input-number></el-form-item></el-col>
+        <el-col :xs="24" :sm="24" :md="8"><el-form-item label="交付周期"><el-input v-model="productForm.delivery_days" placeholder="例如：7-10个工作日"></el-input></el-form-item></el-col>
       </el-row>
-      <el-form-item label="包含服务"><el-input v-model="productForm.included_services" type="textarea" :rows="2"/></el-form-item>
-      <el-form-item label="不包含服务"><el-input v-model="productForm.excluded_services" type="textarea" :rows="2"/></el-form-item>
-      <el-form-item label="售后保障"><el-input v-model="productForm.after_sales"/></el-form-item>
+      <el-form-item label="包含服务"><el-input v-model="productForm.included_services" type="textarea" :rows="4"></el-input></el-form-item>
+      <el-form-item label="不包含服务"><el-input v-model="productForm.excluded_services" type="textarea" :rows="3"></el-input></el-form-item>
+      <el-form-item label="售后保障"><el-input v-model="productForm.after_sales" type="textarea" :rows="3"></el-input></el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="productDialogVisible=false">取消</el-button>
@@ -458,21 +465,21 @@
   <!-- ========== 弹窗：API编辑 ========== -->
   <el-dialog v-model="apiDialogVisible" :title="editingApi.id?'编辑API':'添加API'" width="540px">
     <el-form :model="apiForm" label-width="110px">
-      <el-form-item label="名称"><el-input v-model="apiForm.name" placeholder="例如：DeepSeek主账号"/></el-form-item>
+      <el-form-item label="名称"><el-input v-model="apiForm.name" placeholder="例如：DeepSeek主账号"></el-input></el-form-item>
       <el-form-item label="类型">
         <el-select v-model="apiForm.api_type">
-          <el-option label="DeepSeek" value="deepseek"/>
-          <el-option label="OpenAI" value="openai"/>
-          <el-option label="自定义" value="custom"/>
+          <el-option label="DeepSeek" value="deepseek"></el-option>
+          <el-option label="OpenAI" value="openai"></el-option>
+          <el-option label="自定义" value="custom"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="API地址"><el-input v-model="apiForm.api_url" placeholder="https://api.deepseek.com/v1/chat/completions"/></el-form-item>
-      <el-form-item label="API Key"><el-input v-model="apiForm.api_key" type="password" show-password placeholder="sk-..." /></el-form-item>
-      <el-form-item label="模型"><el-input v-model="apiForm.model" placeholder="deepseek-chat"/></el-form-item>
+      <el-form-item label="API地址"><el-input v-model="apiForm.api_url" placeholder="https://api.deepseek.com/v1/chat/completions"></el-input></el-form-item>
+      <el-form-item label="API Key"><el-input v-model="apiForm.api_key" type="password" show-password placeholder="sk-..."></el-input></el-form-item>
+      <el-form-item label="模型"><el-input v-model="apiForm.model" placeholder="deepseek-chat"></el-input></el-form-item>
       <el-row :gutter="16">
-        <el-col :span="8"><el-form-item label="温度"><el-input-number v-model="apiForm.temperature" :min="0" :max="2" :step="0.1"/></el-form-item></el-col>
-        <el-col :span="8"><el-form-item label="最大Token"><el-input-number v-model="apiForm.max_tokens" :min="100" :max="32000"/></el-form-item></el-col>
-        <el-col :span="8"><el-form-item label="超时(秒)"><el-input-number v-model="apiForm.timeout_seconds" :min="5" :max="120"/></el-form-item></el-col>
+        <el-col :span="8"><el-form-item label="温度"><el-input-number v-model="apiForm.temperature" :min="0" :max="2" :step="0.1"></el-input-number></el-form-item></el-col>
+        <el-col :span="8"><el-form-item label="最大Token"><el-input-number v-model="apiForm.max_tokens" :min="100" :max="32000"></el-input-number></el-form-item></el-col>
+        <el-col :span="8"><el-form-item label="超时(秒)"><el-input-number v-model="apiForm.timeout_seconds" :min="5" :max="120"></el-input-number></el-form-item></el-col>
       </el-row>
     </el-form>
     <template #footer>
@@ -484,10 +491,10 @@
   <!-- ========== 弹窗：违禁词编辑 ========== -->
   <el-dialog v-model="bannedDialogVisible" :title="editingBanned.id?'编辑违禁词':'添加违禁词'" width="460px">
     <el-form :model="bannedForm" label-width="100px">
-      <el-form-item label="违禁词"><el-input v-model="bannedForm.word"/></el-form-item>
-      <el-form-item label="分类"><el-input v-model="bannedForm.category" placeholder="站外引流/联系方式/私下交易/营销违禁"/></el-form-item>
-      <el-form-item label="正则表达式"><el-switch v-model="bannedForm.is_regex" :true-value="1" :false-value="0"/></el-form-item>
-      <el-form-item label="启用"><el-switch v-model="bannedForm.is_active" :true-value="1" :false-value="0"/></el-form-item>
+      <el-form-item label="违禁词"><el-input v-model="bannedForm.word"></el-input></el-form-item>
+      <el-form-item label="分类"><el-input v-model="bannedForm.category" placeholder="站外引流/联系方式/私下交易/营销违禁"></el-input></el-form-item>
+      <el-form-item label="正则表达式"><el-switch v-model="bannedForm.is_regex" :true-value="1" :false-value="0"></el-switch></el-form-item>
+      <el-form-item label="启用"><el-switch v-model="bannedForm.is_active" :true-value="1" :false-value="0"></el-switch></el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="bannedDialogVisible=false">取消</el-button>

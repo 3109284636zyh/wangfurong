@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const pool = require('../db');
+const { badRequest, normalizeString } = require('../middleware/validate');
 const router = express.Router();
 
 // ==================== AI小福模式 系统提示词 ====================
@@ -210,11 +211,14 @@ async function callApi(api, messages, customTemperature) {
 
 // ==================== 核心：一键生成回复 ====================
 router.post('/generate', async (req, res) => {
-  const { question, session_id, mode, chat_form } = req.body;
+  const question = normalizeString(req.body.question, 5000);
+  const session_id = normalizeString(req.body.session_id, 100);
+  const mode = req.body.mode === 'chat' || req.body.mode === 'human' ? req.body.mode : 'work';
+  const chat_form = normalizeString(req.body.chat_form, 30);
   const isChatMode = mode === 'chat' || mode === 'human';  // chat/human=AI小福模式, work/其他=客服模式
 
-  if (!question || !question.trim()) {
-    return res.json({ code: 400, message: isChatMode ? '请输入你想说的话' : '请输入客户咨询内容' });
+  if (!question) {
+    return badRequest(res, isChatMode ? '请输入你想说的话' : '请输入客户咨询内容');
   }
 
   const startTime = Date.now();
@@ -270,8 +274,11 @@ router.post('/generate', async (req, res) => {
       return res.json({ code: 500, message: 'AI服务未配置' });
     }
 
-    // 获取自定义temperature（AI小福模式使用）
-    const customTemp = isChatMode && settings?.ai_temperature ? parseFloat(settings.ai_temperature) : undefined;
+    // 获取后台配置的AI回复随机性（优先于接口默认temperature）
+    const parsedTemp = settings?.ai_temperature !== undefined && settings?.ai_temperature !== null
+      ? parseFloat(settings.ai_temperature)
+      : NaN;
+    const customTemp = Number.isFinite(parsedTemp) ? parsedTemp : undefined;
 
     // 尝试主API，超时自动切换备用
     try {
@@ -314,7 +321,7 @@ router.post('/generate', async (req, res) => {
           if (recheckViolations.length > 0) {
             isViolation = true;
             for (const w of recheckViolations) {
-              finalReply = finalReply.replace(new RegExp(w, 'g'), '***');
+              finalReply = finalReply.split(w).join('***');
             }
           } else {
             isViolation = false;
@@ -344,7 +351,8 @@ router.post('/generate', async (req, res) => {
     console.error('生成回复失败:', err);
     const elapsed = Date.now() - startTime;
     await saveLog(question, '生成失败: ' + err.message, apiUsed || '未知', elapsed, 0);
-    res.json({ code: 500, message: '生成回复失败：' + err.message });
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    res.json({ code: 500, message: isDevelopment ? ('生成回复失败：' + err.message) : '生成回复失败，请稍后重试' });
   }
 });
 

@@ -26,8 +26,11 @@ class AppError extends Error {
 
 // 错误处理中间件
 function errorHandler(err, req, res, next) {
-  // 默认错误信息
-  let statusCode = err.code || 500;
+  // 默认错误信息。注意：MySQL/Multer等错误的 err.code 常常是字符串，不能直接作为HTTP状态码。
+  let statusCode = Number.isInteger(err.statusCode)
+    ? err.statusCode
+    : (Number.isInteger(err.status) ? err.status : (Number.isInteger(err.code) ? err.code : 500));
+  if (statusCode < 400 || statusCode > 599) statusCode = 500;
   let message = err.message || '服务器内部错误';
   let details = err.details || null;
 
@@ -38,9 +41,15 @@ function errorHandler(err, req, res, next) {
   if (err.code === 'ER_DUP_ENTRY') {
     statusCode = 400;
     message = '数据已存在，请勿重复添加';
-  } else if (err.code && err.code.startsWith('ER_')) {
+  } else if (typeof err.code === 'string' && err.code.startsWith('ER_')) {
     statusCode = 500;
     message = isDevelopment ? `数据库错误: ${err.message}` : '数据库操作失败';
+  }
+
+  // 文件上传错误（multer）
+  if (err.name === 'MulterError') {
+    statusCode = 400;
+    message = err.code === 'LIMIT_FILE_SIZE' ? '上传文件不能超过2MB' : '文件上传失败';
   }
 
   // JWT错误

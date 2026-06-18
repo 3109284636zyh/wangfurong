@@ -435,7 +435,11 @@ Authorization: Bearer {token}
   "code": 200,
   "data": {
     "has_violation": true,
-    "violations": ["微信", "微信号"]
+    "violations": [
+      { "word": "微信", "category": "联系方式" },
+      { "word": "微信号", "category": "联系方式" }
+    ],
+    "count": 2
   }
 }
 ```
@@ -462,5 +466,6 @@ Authorization: Bearer {token}
 | 接口类型 | 限制 |
 |---------|------|
 | `/api/chat/generate` | 10次/分钟/IP |
-| 管理后台接口 | 100次/分钟/Token |
-| 公开接口 | 30次/分钟/IP |
+| 全部 `/api/*` 接口 | 120次/分钟/IP或Token |
+
+> 当前实现为单进程内存限流。多实例部署时建议替换为 Redis 限流。

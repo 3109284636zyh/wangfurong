@@ -1,8 +1,8 @@
 # 🤖 AI小福 - 建站接单客服助手
 
 > **版本**: 2.0.0  
-> **状态**: ✅ 生产就绪  
-> **最近更新**: 2024年6月 - 安全性和性能优化
+> **状态**: ✅ 基础可部署，持续优化中  
+> **最近更新**: 2026年6月 - 安全性和性能优化
 
 微信小程序 + 网页管理后台 + 后端API 全套源码
 
@@ -70,37 +70,38 @@ npm start
 
 ---
 
+## 🏗️ 项目结构
+
 ```
 ai-xiaofu/
-├── backend/              # Node.js 后端API服务
-│   ├── server.js          # 服务入口
-│   ├── db.js              # MySQL数据库连接
-│   ├── routes/
-│   │   ├── auth.js        # 登录认证（仅密码）
-│   │   ├── ai-settings.js # AI个性配置
-│   │   ├── products.js    # 产品库CRUD + Excel导入导出
-│   │   ├── apis.js        # 大模型API管理 + 连通测试
-│   │   ├── chat.js        # 核心：一键生成回复 + 风控过滤
-│   │   ├── logs.js        # 对话日志
-│   │   └── banned-words.js# 违禁词库管理
-│   └── middleware/
-│       └── auth.js        # JWT认证（30分钟超时）
-├── admin/                 # Vue3 + Element Plus 管理后台
-│   ├── index.html         # 单页面应用
-│   ├── css/
-│   └── js/
-│       └── app.js         # 后台全部逻辑
 ├── miniprogram/           # 微信小程序源码
-│   ├── app.js
-│   ├── app.json
-│   ├── app.wxss
-│   ├── project.config.json
-│   └── pages/index/
-│       ├── index.wxml     # 一键应答主界面
-│       ├── index.wxss
-│       ├── index.js
-│       └── index.json
-└── database.sql           # MySQL数据库建表SQL
+│   ├── app.js             # 全局配置、请求封装、环境切换
+│   ├── app.json           # 页面配置
+│   ├── app.wxss           # 全局样式
+│   └── pages/             # 页面目录（index=客服模式，chat=AI小福聊天模式）
+├── backend/               # Node.js 后端API服务
+│   ├── server.js          # 服务入口、CORS、限流、健康检查
+│   ├── db.js              # MySQL数据库连接
+│   ├── .env.example       # 环境变量模板
+│   ├── middleware/
+│   │   ├── auth.js        # JWT认证（30分钟超时）
+│   │   ├── errorHandler.js# 统一错误处理
+│   │   ├── rateLimit.js   # 内置限流中间件
+│   │   └── validate.js    # 输入验证工具
+│   └── routes/
+│       ├── auth.js        # 登录认证（仅密码）
+│       ├── ai-settings.js # AI个性配置
+│       ├── products.js    # 产品库CRUD + Excel导入导出
+│       ├── apis.js        # 大模型API管理 + 连通测试
+│       ├── chat.js        # 核心：一键生成回复 + 风控过滤
+│       ├── logs.js        # 对话日志
+│       └── banned-words.js# 违禁词库管理
+├── admin/                 # Vue3 + Element Plus 管理后台
+├── database.sql           # MySQL数据库建表SQL
+├── database_add_indexes.sql # 既有数据库索引升级脚本
+├── DEPLOYMENT.md          # 部署指南
+├── API.md                 # API接口文档
+└── IMPROVEMENTS.md        # 改进报告
 ```
 
 ---
@@ -125,6 +126,8 @@ ai-xiaofu/
 - ✅ 请求自动重试机制
 - ✅ 小程序自动更新检查
 - ✅ 统一的错误处理中间件
+- ✅ 异步路由错误自动捕获
+- ✅ 输入验证和限流保护
 - ✅ 增强的健康检查接口
 
 ### 📚 文档完善
@@ -181,7 +184,7 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=你的MySQL密码
-DB_NAME=ai_xiaofu
+DB_NAME=wfr
 
 # DeepSeek API（你在DeepSeek平台申请的key）
 DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

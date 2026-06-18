@@ -1,5 +1,5 @@
 // 环境配置
-const ENV_CONFIG = {
+var ENV_CONFIG = {
   // 开发环境
   development: {
     apiBase: 'http://localhost:3000',
@@ -18,13 +18,19 @@ const ENV_CONFIG = {
 };
 
 // 当前环境（发布时改为 'production'）
-const CURRENT_ENV = 'production';
+var CURRENT_ENV = 'production';
+
+var currentEnvConfig = ENV_CONFIG[CURRENT_ENV] || ENV_CONFIG.production;
 
 App({
   globalData: {
-    ...ENV_CONFIG[CURRENT_ENV],
+    apiBase: currentEnvConfig.apiBase,
+    debug: currentEnvConfig.debug,
     sessionId: '',
     opening: '您好！我是您的专属建站顾问小福😊 请问有什么可以帮您的？',
+    chatModeDefault: 'friend',
+    enableHumanMode: 0,
+    humanModeTip: '小福正在用心回复你~',
     version: '2.0.0'
   },
 
@@ -57,8 +63,11 @@ App({
     wx.request({
       url: this.globalData.apiBase + '/api/chat/public-info',
       success: function(res) {
-        if (res.data && res.data.code === 200 && res.data.data && res.data.data.opening) {
-          that.globalData.opening = res.data.data.opening;
+        if (res.data && res.data.code === 200 && res.data.data) {
+          if (res.data.data.opening) that.globalData.opening = res.data.data.opening;
+          if (res.data.data.chat_mode) that.globalData.chatModeDefault = res.data.data.chat_mode;
+          that.globalData.enableHumanMode = res.data.data.enable_human_mode || 0;
+          that.globalData.humanModeTip = res.data.data.human_mode_tip || '小福正在用心回复你~';
         }
       },
       fail: function(err) {
@@ -72,7 +81,7 @@ App({
   // 检查小程序更新
   checkUpdate: function() {
     if (wx.canIUse('getUpdateManager')) {
-      const updateManager = wx.getUpdateManager();
+      var updateManager = wx.getUpdateManager();
       updateManager.onCheckForUpdate(function(res) {
         if (res.hasUpdate) {
           updateManager.onUpdateReady(function() {
@@ -147,7 +156,7 @@ App({
         },
         fail: function(err) {
           // 网络错误，可重试
-          if (retries > 0 && err.errMsg.includes('timeout')) {
+          if (retries > 0 && err.errMsg && err.errMsg.indexOf('timeout') !== -1) {
             console.log('[AI小福] 网络超时，重试中...剩余次数:', retries);
             setTimeout(function() {
               that._requestWithRetry(url, method, data, retries - 1, timeout)

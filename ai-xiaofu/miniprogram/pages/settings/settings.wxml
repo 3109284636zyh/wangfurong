@@ -1,0 +1,87 @@
+<view class="settings-page">
+  <view class="settings-hero">
+    <view class="hero-title">设置</view>
+    <view class="hero-desc">聊天偏好、客服入口和缓存管理统一放在这里，首页保持清爽。</view>
+  </view>
+
+  <view class="setting-section">
+    <view class="section-title">聊天设置</view>
+    <view class="section-desc">默认聊天形态会用于 AI小福独立聊天入口。</view>
+    <view class="form-list">
+      <view wx:for="{{chatForms}}" wx:key="key" class="form-item {{chatForm === item.key ? 'active' : ''}}" bindtap="switchChatForm" data-form="{{item.key}}">
+        <text class="form-icon">{{item.icon}}</text>
+        <text>{{item.name}}</text>
+      </view>
+    </view>
+    <view class="switch-row">
+      <view>
+        <view class="switch-title">保留本地聊天记录</view>
+        <view class="switch-desc">关闭后仅保存偏好；当前聊天页仍可临时使用。</view>
+      </view>
+      <switch checked="{{keepHistory}}" bindchange="toggleKeepHistory" color="#6366f1" />
+    </view>
+  </view>
+
+  <view class="setting-section">
+    <view class="section-title">客服助手设置</view>
+    <view class="section-desc">客服助手仍固定使用 work 模式，生成回复时保留合规风控。</view>
+    <view class="entry-row">
+      <view class="entry-option {{defaultEntry === 'assistant' ? 'active' : ''}}" bindtap="setDefaultEntry" data-entry="assistant">
+        <view class="entry-title">客服助手优先</view>
+        <view class="entry-desc">适合接单回复</view>
+      </view>
+      <view class="entry-option {{defaultEntry === 'chat' ? 'active' : ''}}" bindtap="setDefaultEntry" data-entry="chat">
+        <view class="entry-title">AI聊天优先</view>
+        <view class="entry-desc">适合陪伴聊天</view>
+      </view>
+    </view>
+    <view class="platform-tip">常用平台提示：闲鱼 / 淘宝 / 拼多多 客户咨询可直接粘贴到首页客服助手。</view>
+  </view>
+
+  <view class="setting-section {{section === 'cache' ? 'highlight' : ''}}">
+    <view class="section-title">缓存与数据</view>
+    <view class="action-list">
+      <view class="action-item" bindtap="clearChatHistory">
+        <view>
+          <view class="action-title">清空聊天记录</view>
+          <view class="action-desc">清空本机 AI小福聊天历史</view>
+        </view>
+        <view class="action-arrow">›</view>
+      </view>
+      <view class="action-item" bindtap="clearAssistantPreset">
+        <view>
+          <view class="action-title">清空入口偏好</view>
+          <view class="action-desc">清空首页预填和上次模式选择</view>
+        </view>
+        <view class="action-arrow">›</view>
+      </view>
+      <view class="action-item danger" bindtap="clearAllLocal">
+        <view>
+          <view class="action-title">清空全部本地缓存</view>
+          <view class="action-desc">不影响后台产品库、接口和数据库</view>
+        </view>
+        <view class="action-arrow">›</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="setting-section">
+    <view class="section-title">关于与说明</view>
+    <view class="action-list">
+      <view class="action-item" bindtap="showRiskInfo">
+        <view>
+          <view class="action-title">风控说明</view>
+          <view class="action-desc">客服模式合规检测不会关闭</view>
+        </view>
+        <view class="action-arrow">›</view>
+      </view>
+      <view class="action-item" bindtap="showVersion">
+        <view>
+          <view class="action-title">版本信息</view>
+          <view class="action-desc">当前版本 {{version}}</view>
+        </view>
+        <view class="action-arrow">›</view>
+      </view>
+    </view>
+  </view>
+</view>

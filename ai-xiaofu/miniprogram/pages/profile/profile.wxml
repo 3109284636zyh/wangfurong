@@ -1,0 +1,86 @@
+<view class="profile-page">
+  <view class="profile-card">
+    <view class="avatar">福</view>
+    <view class="profile-info">
+      <view class="profile-title">AI小福</view>
+      <view class="profile-desc">建站接单客服助手 · AI陪伴聊天</view>
+    </view>
+  </view>
+
+  <view class="status-grid">
+    <view class="status-card">
+      <view class="status-value">{{chatFormName}}</view>
+      <view class="status-label">默认聊天形态</view>
+    </view>
+    <view class="status-card">
+      <view class="status-value">{{humanModeText}}</view>
+      <view class="status-label">独立聊天状态</view>
+    </view>
+  </view>
+
+  <view class="menu-section">
+    <view class="section-title">常用功能</view>
+    <view class="menu-item" bindtap="goSettings">
+      <view class="menu-icon purple">⚙️</view>
+      <view class="menu-main">
+        <view class="menu-title">设置</view>
+        <view class="menu-desc">聊天偏好、缓存清理、模式说明</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="goProducts">
+      <view class="menu-icon blue">🛍️</view>
+      <view class="menu-main">
+        <view class="menu-title">产品与服务</view>
+        <view class="menu-desc">查看建站套餐、报价和交付范围</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="goAssistant">
+      <view class="menu-icon green">💼</view>
+      <view class="menu-main">
+        <view class="menu-title">客服助手</view>
+        <view class="menu-desc">回到首页生成合规客户回复</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="goChat">
+      <view class="menu-icon pink">💕</view>
+      <view class="menu-main">
+        <view class="menu-title">AI聊天对话</view>
+        <view class="menu-desc">进入独立 AI小福聊天页</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+  </view>
+
+  <view class="menu-section">
+    <view class="section-title">帮助与关于</view>
+    <view class="menu-item" bindtap="showUsage">
+      <view class="menu-icon orange">💡</view>
+      <view class="menu-main">
+        <view class="menu-title">使用说明</view>
+        <view class="menu-desc">查看首页、电商、我的的使用方式</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="clearLocalCache">
+      <view class="menu-icon red">🧹</view>
+      <view class="menu-main">
+        <view class="menu-title">清理缓存</view>
+        <view class="menu-desc">清空聊天记录和本地偏好</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="showAbout">
+      <view class="menu-icon gray">ℹ️</view>
+      <view class="menu-main">
+        <view class="menu-title">关于AI小福</view>
+        <view class="menu-desc">版本 {{version}} · 专注建站接单客服</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+  </view>
+
+  <view class="footer-note">设置等低频功能已归类到“我的”，首页只保留核心入口。</view>
+</view>

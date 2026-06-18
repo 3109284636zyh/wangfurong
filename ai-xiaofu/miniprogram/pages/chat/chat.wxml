@@ -1,0 +1,43 @@
+<view class="chat-page">
+  <view class="top-card">
+    <view class="avatar">💕</view>
+    <view class="top-info">
+      <view class="top-title">AI小福真人聊天</view>
+      <view class="top-subtitle">{{humanModeTip}}</view>
+    </view>
+    <button class="clear-btn" bindtap="clearChat">清空</button>
+  </view>
+
+  <view class="form-tabs">
+    <view wx:for="{{chatForms}}" wx:key="key" class="form-tab {{chatForm === item.key ? 'active' : ''}}" bindtap="switchChatForm" data-form="{{item.key}}">
+      <text>{{item.icon}}</text>
+      <text>{{item.name}}</text>
+    </view>
+  </view>
+
+  <scroll-view class="message-scroll" scroll-y scroll-with-animation scroll-into-view="bottom-anchor">
+    <view class="message-list">
+      <view wx:for="{{messages}}" wx:key="index" class="message-row {{item.role === 'user' ? 'is-user' : 'is-ai'}}">
+        <view class="message-avatar" wx:if="{{item.role !== 'user'}}">福</view>
+        <view class="message-bubble">
+          <text>{{item.content}}</text>
+        </view>
+      </view>
+      <view wx:if="{{generating}}" class="message-row is-ai">
+        <view class="message-avatar">福</view>
+        <view class="message-bubble typing">
+          <text>{{humanModeTip}}</text>
+          <view class="typing-dots"><text></text><text></text><text></text></view>
+        </view>
+      </view>
+      <view id="bottom-anchor"></view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{errorMsg}}" class="error-bar">{{errorMsg}}</view>
+
+  <view class="input-bar">
+    <input class="chat-input" value="{{inputText}}" placeholder="和小福说点什么..." bindinput="onInputChange" confirm-type="send" bindconfirm="sendMessage"/>
+    <button class="send-btn" bindtap="sendMessage" loading="{{generating}}" disabled="{{!inputText || generating}}">发送</button>
+  </view>
+</view>

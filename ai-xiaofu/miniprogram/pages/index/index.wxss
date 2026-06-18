@@ -1,236 +1,372 @@
-/* ==================== 整体容器 ==================== */
-.container {
-  padding: 20px 16px 40px;
+page {
+  background: #f4f6fb;
+}
+
+.home-page {
   min-height: 100vh;
+  padding: 16px 14px 34px;
+  box-sizing: border-box;
 }
 
-/* ==================== 顶部 ==================== */
-.header {
-  text-align: center;
-  padding: 20px 0 16px;
+.hero-card {
+  padding: 20px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 58%, #ec4899 100%);
+  color: #fff;
+  box-shadow: 0 16px 34px rgba(99,102,241,0.24);
 }
-.header-icon { font-size: 48px; }
-.header-title { font-size: 24px; font-weight: 700; color: #303133; margin-top: 6px; }
-.header-subtitle { font-size: 12px; color: #909399; margin-top: 4px; }
 
-/* ==================== 模式切换 ==================== */
-.mode-switch-bar {
+.hero-top {
   display: flex;
-  background: #e8e8e8;
-  border-radius: 22px;
-  padding: 3px;
-  margin-bottom: 18px;
+  align-items: center;
+  gap: 12px;
 }
-.mode-switch {
-  flex: 1;
-  text-align: center;
-  padding: 10px 0;
-  border-radius: 20px;
-  font-size: 14px;
-  color: #909399;
-  transition: all 0.3s;
+
+.hero-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.28);
+  font-size: 22px;
+  font-weight: 800;
 }
-.mode-switch.active {
-  background: #fff;
-  color: #303133;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.mode-icon { font-size: 16px; }
-.mode-label { font-size: 13px; }
 
-/* ==================== 区域块 ==================== */
-.section {
-  background: #fff;
-  border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+.hero-copy {
+  flex: 1;
+  min-width: 0;
 }
+
+.hero-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.hero-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: .88;
+}
+
+.hero-settings {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.16);
+  font-size: 12px;
+}
+
+.hero-desc {
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  opacity: .92;
+}
+
+.stat-row {
+  display: flex;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.stat-item {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.15);
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.stat-label {
+  margin-top: 4px;
+  font-size: 10px;
+  opacity: .82;
+}
+
+.entry-grid {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.entry-card {
+  flex: 1;
+  padding: 16px 14px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+  min-height: 156px;
+  box-sizing: border-box;
+}
+
+.entry-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.product-entry .entry-icon {
+  background: #eef2ff;
+}
+
+.chat-entry .entry-icon {
+  background: #fdf2f8;
+}
+
+.entry-title {
+  margin-top: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.entry-desc {
+  margin-top: 6px;
+  min-height: 38px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.55;
+}
+
+.entry-action {
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.assistant-card,
+.section,
+.tips-card {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+}
+
+.assistant-head,
 .section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  gap: 10px;
 }
-.section-title { font-size: 15px; font-weight: 600; color: #303133; }
-.section-desc { font-size: 11px; color: #909399; }
 
-/* ==================== 输入框 ==================== */
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.section-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+.assistant-toggle {
+  flex-shrink: 0;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sample-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.sample-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.assistant-panel {
+  margin-top: 14px;
+}
+
 .input-area {
   width: 100%;
-  min-height: 140px;
+  min-height: 132px;
   padding: 14px;
-  background: #f8f9fa;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
   font-size: 15px;
   line-height: 1.7;
   box-sizing: border-box;
-  color: #303133;
+  color: #1f2937;
 }
+
 .input-footer {
   text-align: right;
   margin-top: 8px;
 }
-.char-count { font-size: 11px; color: #c0c4cc; }
 
-/* ==================== 聊天历史（AI小福模式） ==================== */
-.chat-history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.chat-msg {
-  display: flex;
-  max-width: 85%;
-}
-.msg-user {
-  align-self: flex-end;
-}
-.msg-fu {
-  align-self: flex-start;
-}
-.msg-bubble {
-  padding: 10px 14px;
-  border-radius: 14px;
-  font-size: 14px;
-  line-height: 1.6;
-}
-.msg-user .msg-bubble {
-  background: #6366f1;
-  color: #fff;
-  border-bottom-right-radius: 4px;
-}
-.msg-fu .msg-bubble {
-  background: #f0fdf4;
-  color: #303133;
-  border: 1px solid #dcfce7;
-  border-bottom-left-radius: 4px;
-}
-.msg-text {
-  white-space: pre-wrap;
-  word-break: break-word;
+.char-count {
+  font-size: 11px;
+  color: #c0c4cc;
 }
 
-/* ==================== 按钮 ==================== */
-.actions { margin-bottom: 14px; }
 .btn {
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 500;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
   border: none;
-  padding: 14px 24px;
+  padding: 13px 20px;
 }
-.btn::after { border: none; }
+
+.btn::after {
+  border: none;
+}
 
 .btn-primary {
   width: 100%;
+  margin-top: 10px;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: #fff;
-  margin-bottom: 10px;
-  box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+  box-shadow: 0 8px 18px rgba(99,102,241,0.24);
 }
+
 .btn-primary[disabled] {
   background: #c0c4cc;
   color: #fff;
   box-shadow: none;
 }
 
-.action-row { display: flex; gap: 12px; }
+.action-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .btn-outline {
   background: #fff;
   color: #606266;
-  border: 1px solid #dcdfe6;
+  border: 1px solid #e5e7eb;
 }
-.btn-outline[disabled] { color: #c0c4cc; border-color: #e8e8e8; }
-.btn-half { flex: 1; }
 
-/* ==================== 输出区域 ==================== */
+.btn-outline[disabled] {
+  color: #c0c4cc;
+  border-color: #eef2f7;
+}
+
+.btn-half {
+  flex: 1;
+}
+
 .output-area {
-  min-height: 100px;
+  min-height: 96px;
+  margin-top: 12px;
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
-  border-radius: 10px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 14px;
 }
 
 .loading-box {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 0;
+  padding: 20px 0;
 }
-.loading-dots { display: flex; gap: 8px; margin-bottom: 12px; }
+
+.loading-dots {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .dot {
-  width: 10px; height: 10px;
+  width: 9px;
+  height: 9px;
   background: #6366f1;
   border-radius: 50%;
   animation: bounce 0.6s infinite alternate;
 }
-.dot-2 { animation-delay: 0.2s; }
-.dot-3 { animation-delay: 0.4s; }
-@keyframes bounce {
-  to { transform: translateY(-10px); opacity: 0.4; }
-}
-.loading-text { font-size: 13px; color: #909399; }
 
-.output-content {}
+.dot-2 {
+  animation-delay: 0.2s;
+}
+
+.dot-3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  to {
+    transform: translateY(-8px);
+    opacity: 0.4;
+  }
+}
+
+.loading-text {
+  font-size: 13px;
+  color: #909399;
+}
+
 .output-text {
   font-size: 15px;
   line-height: 1.8;
-  color: #303133;
+  color: #1f2937;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .violation-tip {
   margin-top: 10px;
-  padding: 8px 14px;
+  padding: 8px 12px;
+  border-radius: 10px;
   background: #fef3c7;
-  border-radius: 8px;
-  font-size: 12px;
   color: #92400e;
+  font-size: 12px;
   text-align: center;
 }
 
-/* ==================== 错误提示 ==================== */
 .error-box {
+  margin-top: 14px;
+  padding: 13px;
+  border-radius: 14px;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 14px;
-  font-size: 13px;
   color: #dc2626;
-  text-align: center;
-}
-
-/* ==================== 使用说明 ==================== */
-.help-section {
-  background: #fff;
-  border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-.help-title { font-size: 15px; font-weight: 600; color: #303133; margin-bottom: 12px; }
-.help-steps {}
-.step {
   font-size: 13px;
-  color: #606266;
-  padding: 6px 0;
-  line-height: 1.6;
+  text-align: center;
 }
 
-/* ==================== 底部 ==================== */
-.footer-note {
-  text-align: center;
-  font-size: 11px;
-  color: #c0c4cc;
-  padding: 16px 0;
+.tips-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 10px;
+}
+
+.tip-row {
+  padding: 7px 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
 }

@@ -8,6 +8,7 @@ const app = createApp({
     const loggedIn = ref(false);
     const activeMenu = ref('dashboard');
     const saving = ref(false);
+    const mobileMenuOpen = ref(false);
 
     // 页面元信息
     const menuMeta = {
@@ -89,6 +90,22 @@ const app = createApp({
       return data;
     }
 
+    async function downloadFile(url, filename) {
+      const headers = {};
+      if (token.value) headers['Authorization'] = `Bearer ${token.value}`;
+      const res = await fetch(apiBase + url, { headers });
+      if (res.status === 401) { logout(); throw new Error('登录已过期'); }
+      if (!res.ok) throw new Error('导出失败');
+      const blob = await res.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      URL.revokeObjectURL(link.href);
+      document.body.removeChild(link);
+    }
+
     function showMsg(msg, type = 'success') {
       ElementPlus.ElMessage({ message: msg, type: type });
     }
@@ -126,6 +143,8 @@ const app = createApp({
         const d = await request('/api/ai-settings');
         if (d.code === 200 && d.data) {
           Object.assign(aiForm, d.data);
+          aiForm.ai_temperature = Number(aiForm.ai_temperature || 0.7);
+          aiForm.enable_human_mode = aiForm.enable_human_mode ? 1 : 0;
           // 将JSON格式的兴趣爱好转换回多行文本
           if (d.data.ai_interests) {
             try {
@@ -170,11 +189,21 @@ const app = createApp({
     const categories = ref([]);
     const productDialogVisible = ref(false);
     const editingProduct = ref({});
+    const productLoading = ref(false);
+    const productPage = ref(1);
+    const productPageSize = 20;
+    const productFormRef = ref(null);
+    let productSearchTimer = null;
+    let productRequestSeq = 0;
     const productForm = reactive({
       category_id: null, name: '', description: '', standard_price: 0,
       discount_price: 0, included_services: '', excluded_services: '',
-      delivery_days: '', after_sales: ''
+      delivery_days: '', after_sales: '', is_active: 1, faq: {}
     });
+    const productRules = {
+      name: [{ required: true, message: '请输入产品名称', trigger: 'blur' }]
+    };
+    const activeProductCount = computed(() => productList.value.filter(p => p.is_active).length);
 
     async function loadCategories() {
       try {
@@ -183,69 +212,181 @@ const app = createApp({
       } catch (e) { console.error(e); }
     }
 
-    async function loadProducts(page = 1) {
+    function emptyProductForm() {
+      return {
+        category_id: null,
+        name: '',
+        description: '',
+        standard_price: 0,
+        discount_price: 0,
+        included_services: '',
+        excluded_services: '',
+        delivery_days: '',
+        after_sales: '',
+        is_active: 1,
+        faq: {}
+      };
+    }
+
+    function parseFaq(value) {
+      if (!value) return {};
+      if (typeof value === 'object') return value;
+      try { return JSON.parse(value); }
+      catch (e) { return {}; }
+    }
+
+    function fillProductForm(row = {}) {
+      Object.assign(productForm, emptyProductForm(), {
+        category_id: row.category_id ?? null,
+        name: row.name ?? '',
+        description: row.description ?? '',
+        standard_price: Number(row.standard_price ?? 0),
+        discount_price: Number(row.discount_price ?? 0),
+        included_services: row.included_services ?? '',
+        excluded_services: row.excluded_services ?? '',
+        delivery_days: row.delivery_days ?? '',
+        after_sales: row.after_sales ?? '',
+        is_active: row.is_active ?? 1,
+        faq: parseFaq(row.faq)
+      });
+    }
+
+    function normalizeProductPayload() {
+      return {
+        category_id: productForm.category_id === '' ? null : productForm.category_id,
+        name: String(productForm.name || '').trim(),
+        description: productForm.description || '',
+        standard_price: Number(productForm.standard_price) || 0,
+        discount_price: Number(productForm.discount_price) || 0,
+        included_services: productForm.included_services || '',
+        excluded_services: productForm.excluded_services || '',
+        delivery_days: productForm.delivery_days || '',
+        after_sales: productForm.after_sales || '',
+        is_active: productForm.is_active ?? 1,
+        faq: productForm.faq || {}
+      };
+    }
+
+    async function loadProducts(page = productPage.value || 1) {
+      const pageNumber = Number(page) || 1;
+      productPage.value = pageNumber;
+      productLoading.value = true;
+      const seq = ++productRequestSeq;
       try {
-        const params = new URLSearchParams({ page, limit: 20 });
-        if (productSearch.value) params.append('keyword', productSearch.value);
+        const params = new URLSearchParams({ page: String(pageNumber), limit: String(productPageSize) });
+        if (productSearch.value) params.append('keyword', productSearch.value.trim());
         if (productCategoryFilter.value) params.append('category_id', productCategoryFilter.value);
         const d = await request('/api/products?' + params);
-        if (d.code === 200) { productList.value = d.data.list; productTotal.value = d.data.total; }
+        if (seq === productRequestSeq && d.code === 200) {
+          productList.value = d.data.list || [];
+          productTotal.value = Number(d.data.total || 0);
+        } else if (d.code !== 200) {
+          showMsg(d.message || '加载产品失败', 'error');
+        }
       } catch (e) { console.error(e); }
+      finally { if (seq === productRequestSeq) productLoading.value = false; }
+    }
+
+    function applyProductFilters() {
+      loadProducts(1);
+    }
+
+    function queueProductSearch() {
+      clearTimeout(productSearchTimer);
+      productSearchTimer = setTimeout(() => loadProducts(1), 300);
+    }
+
+    function resetProductFilters() {
+      productSearch.value = '';
+      productCategoryFilter.value = null;
+      loadProducts(1);
+    }
+
+    function money(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return '0';
+      return n.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+    }
+
+    async function reloadProductsAfterMutation(preferCurrentPage = true) {
+      await loadProducts(preferCurrentPage ? productPage.value : 1);
+      if (productList.value.length === 0 && productTotal.value > 0 && productPage.value > 1) {
+        await loadProducts(productPage.value - 1);
+      }
     }
 
     function showProductDialog(row = null) {
       if (row) {
         editingProduct.value = row;
-        Object.assign(productForm, row);
+        fillProductForm(row);
       } else {
         editingProduct.value = {};
-        Object.keys(productForm).forEach(k => productForm[k] = k.includes('price') ? 0 : '');
+        fillProductForm();
       }
       productDialogVisible.value = true;
     }
 
     function resetProductForm() {
       editingProduct.value = {};
-      Object.keys(productForm).forEach(k => productForm[k] = k.includes('price') ? 0 : '');
+      fillProductForm();
+      productFormRef.value?.clearValidate?.();
     }
 
     async function saveProduct() {
+      if (productFormRef.value) {
+        try { await productFormRef.value.validate(); }
+        catch (e) { return; }
+      }
       saving.value = true;
       try {
-        const method = editingProduct.value.id ? 'PUT' : 'POST';
-        const url = editingProduct.value.id ? `/api/products/${editingProduct.value.id}` : '/api/products';
-        const d = await request(url, { method, body: JSON.stringify(productForm) });
+        const isEdit = Boolean(editingProduct.value.id);
+        const method = isEdit ? 'PUT' : 'POST';
+        const url = isEdit ? `/api/products/${editingProduct.value.id}` : '/api/products';
+        const d = await request(url, { method, body: JSON.stringify(normalizeProductPayload()) });
+        if (d.code !== 200) { showMsg(d.message || '保存失败', 'error'); return; }
         showMsg(d.message || '保存成功');
         productDialogVisible.value = false;
-        loadProducts();
+        await reloadProductsAfterMutation(isEdit);
       } catch (e) { showMsg('保存失败', 'error'); }
-      saving.value = false;
+      finally { saving.value = false; }
     }
 
     async function toggleProduct(row) {
       try {
         const d = await request(`/api/products/${row.id}/toggle`, { method: 'PUT' });
+        if (d.code !== 200) { showMsg(d.message || '操作失败', 'error'); return; }
         showMsg(d.message);
-        loadProducts();
+        await reloadProductsAfterMutation(true);
       } catch (e) { showMsg('操作失败', 'error'); }
     }
 
     async function deleteProduct(id) {
       try {
         await ElementPlus.ElMessageBox.confirm('确定删除该产品？', '确认', { type: 'warning' });
-        await request(`/api/products/${id}`, { method: 'DELETE' });
+        const d = await request(`/api/products/${id}`, { method: 'DELETE' });
+        if (d.code !== 200) { showMsg(d.message || '删除失败', 'error'); return; }
         showMsg('已删除');
-        loadProducts();
+        await reloadProductsAfterMutation(true);
       } catch (e) { /* cancel */ }
     }
 
     async function exportProducts() {
-      window.open(apiBase + '/api/products/export?' + new URLSearchParams({ token: token.value }), '_blank');
+      try {
+        await downloadFile('/api/products/export', 'products.xlsx');
+      } catch (e) {
+        showMsg(e.message || '导出失败', 'error');
+      }
     }
 
     function onImportSuccess(res) {
-      if (res.code === 200) { showMsg(res.message); loadProducts(); }
+      if (res.code === 200) { showMsg(res.message); loadProducts(1); }
       else showMsg(res.message || '导入失败', 'error');
+    }
+
+    function onImportError(err) {
+      const status = err?.status || err?.target?.status;
+      if (status === 401) { logout(); showMsg('登录已过期，请重新登录', 'error'); return; }
+      showMsg('导入失败，请检查文件格式和登录状态', 'error');
     }
 
     const uploadHeaders = computed(() => ({ Authorization: `Bearer ${token.value}` }));
@@ -345,8 +486,12 @@ const app = createApp({
       catch (e) { showMsg('删除失败', 'error'); }
     }
 
-    function exportLogs() {
-      window.open(apiBase + '/api/logs/export?token=' + token.value, '_blank');
+    async function exportLogs() {
+      try {
+        await downloadFile('/api/logs/export', 'logs.json');
+      } catch (e) {
+        showMsg(e.message || '导出失败', 'error');
+      }
     }
 
     // ==================== 违禁词库 ====================
@@ -403,6 +548,7 @@ const app = createApp({
     // ==================== 导航 ====================
     function switchMenu(index) {
       activeMenu.value = index;
+      mobileMenuOpen.value = false;
       const loaders = {
         dashboard: loadStats, 'ai-settings': loadAiSettings, products: loadProducts,
         apis: loadApis, logs: loadLogs, banned: loadBanned
@@ -437,15 +583,17 @@ const app = createApp({
     }, 60000);
 
     return {
-      apiBase, token, loggedIn, activeMenu, saving,
+      apiBase, token, loggedIn, activeMenu, saving, mobileMenuOpen,
       menuMeta, currentPageMeta,
       loginPassword, loginLoading, loginError, doLogin, logout,
       stats,
       aiForm, loadAiSettings, saveAiSettings, clearMemories,
       productList, productTotal, productSearch, productCategoryFilter, categories,
-      productDialogVisible, editingProduct, productForm,
+      productDialogVisible, editingProduct, productForm, productRules, productFormRef,
+      productLoading, productPage, productPageSize, activeProductCount,
       showProductDialog, resetProductForm, saveProduct, toggleProduct, deleteProduct,
-      exportProducts, onImportSuccess, uploadHeaders, loadProducts, loadCategories,
+      exportProducts, onImportSuccess, onImportError, uploadHeaders, loadProducts, loadCategories,
+      queueProductSearch, applyProductFilters, resetProductFilters, money,
       apiList, apiDialogVisible, editingApi, apiForm,
       showApiDialog, saveApi, deleteApi, setPrimaryApi, testApi, loadApis,
       logList, logTotal, logSearch, logDateRange, loadLogs, deleteLog, exportLogs,
@@ -456,6 +604,11 @@ const app = createApp({
   }
 });
 
-// 注册Element Plus（CDN模式下自动注册）
+// 注册Element Plus 与图标（CDN模式）
 app.use(ElementPlus);
+if (window.ElementPlusIconsVue) {
+  Object.entries(window.ElementPlusIconsVue).forEach(([name, component]) => {
+    app.component(name, component);
+  });
+}
 app.mount('#app');

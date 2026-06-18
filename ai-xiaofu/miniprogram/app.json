@@ -1,6 +1,10 @@
 {
   "pages": [
-    "pages/index/index"
+    "pages/index/index",
+    "pages/ecommerce/ecommerce",
+    "pages/profile/profile",
+    "pages/chat/chat",
+    "pages/settings/settings"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -8,6 +12,26 @@
     "navigationBarTitleText": "AI小福",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#f0f2f5"
+  },
+  "tabBar": {
+    "color": "#909399",
+    "selectedColor": "#6366f1",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/ecommerce/ecommerce",
+        "text": "电商"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
+      }
+    ]
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

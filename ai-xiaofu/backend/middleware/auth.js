@@ -13,7 +13,7 @@ function adminAuth(req, res, next) {
 
   try {
     // jwt.verify 会自动验证签名和过期时间
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'xiaofu_jwt_secret_2024_secure');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.admin = decoded;
     next();
   } catch (err) {
