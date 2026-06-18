@@ -85,6 +85,11 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'admin', 'index.html'));
 });
 
+// 站点根路径：访问域名根目录时跳转到后台，避免显示“页面未找到”
+app.get('/', (req, res) => {
+  res.redirect(302, '/admin/');
+});
+
 // 限流：先对公开高成本接口做严格限制，再对管理接口做常规限制
 app.use('/api/chat/generate', createRateLimiter({
   scope: 'chat-generate',
