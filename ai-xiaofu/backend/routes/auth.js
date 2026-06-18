@@ -5,6 +5,24 @@ const pool = require('../db');
 const { adminAuth } = require('../middleware/auth');
 
 const router = express.Router();
+const DEFAULT_ADMIN_PASSWORD_HASH = '$2a$10$OZtRoR5svU3JYeS2aIPVmOqgISo5T5f8lQaAnzyf30zdLKnp5W29a';
+
+async function getAdmin() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admin (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      password VARCHAR(255) NOT NULL COMMENT 'bcrypt加密密码',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  const [admins] = await pool.query('SELECT * FROM admin LIMIT 1');
+  if (admins.length > 0) return admins[0];
+
+  await pool.query('INSERT INTO admin (password) VALUES (?)', [DEFAULT_ADMIN_PASSWORD_HASH]);
+  const [[admin]] = await pool.query('SELECT * FROM admin LIMIT 1');
+  return admin;
+}
 
 // 登录（仅密码，无用户名---文档2.1要求）
 router.post('/login', async (req, res) => {
@@ -14,18 +32,15 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    const [admins] = await pool.query('SELECT * FROM admin LIMIT 1');
-    if (admins.length === 0) {
-      return res.json({ code: 500, message: '系统未初始化' });
-    }
+    const admin = await getAdmin();
 
-    const isMatch = bcrypt.compareSync(password, admins[0].password);
+    const isMatch = bcrypt.compareSync(password, admin.password);
     if (!isMatch) {
       return res.json({ code: 400, message: '密码不正确，请重新输入' });
     }
 
     const token = jwt.sign(
-      { id: admins[0].id, role: 'admin' },
+      { id: admin.id, role: 'admin' },
       process.env.JWT_SECRET || 'xiaofu_jwt_secret_2024_secure',
       { expiresIn: '30m' }  // 30分钟超时
     );
